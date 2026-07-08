@@ -1,5 +1,5 @@
-/*! solar-layout-card v1.0.3 | MIT License */
-const VERSION = "1.0.3";
+/*! solar-layout-card v1.0.4 | MIT License */
+const VERSION = "1.0.4";
 
 /* ---------- constants ---------- */
 const GRID = 20;                 // px per grid cell in the editor
@@ -92,6 +92,7 @@ class SolarLayoutCard extends HTMLElement {
       color_off: DEFAULT_COLOR_OFF,
       color_max: DEFAULT_COLOR_MAX,
       zoom: 100,
+      font_scale: 100,
       panels: [
         { id: uid(), x: 0, y: 0, orientation: "portrait", entity: "", label: "1", wp: 400 },
         { id: uid(), x: 4, y: 0, orientation: "portrait", entity: "", label: "2", wp: 400 },
@@ -107,6 +108,7 @@ class SolarLayoutCard extends HTMLElement {
       color_off: config.color_off || DEFAULT_COLOR_OFF,
       color_max: config.color_max || DEFAULT_COLOR_MAX,
       zoom: clamp(Number(config.zoom) || 100, 40, 100),
+      font_scale: clamp(Number(config.font_scale) || 100, 50, 200),
       panels: (config.panels || []).map((p) => ({
         id: p.id || uid(),
         x: Number(p.x) || 0,
@@ -150,6 +152,7 @@ class SolarLayoutCard extends HTMLElement {
     const off = this._config.color_off;
     const max = this._config.color_max;
     const zoom = clamp(Number(this._config.zoom) || 100, 40, 100);
+    const fontScale = clamp(Number(this._config.font_scale) || 100, 50, 200) / 100;
 
     const panelsHtml = this._config.panels
       .map((p) => {
@@ -180,7 +183,7 @@ class SolarLayoutCard extends HTMLElement {
       .join("");
 
     this.shadowRoot.innerHTML = `
-      <style>${SolarLayoutCard.styles(cols, rows, zoom)}</style>
+      <style>${SolarLayoutCard.styles(cols, rows, zoom, fontScale)}</style>
       <ha-card>
         <div class="topbar">
           ${this._config.title ? `<div class="header">${this._config.title}</div>` : `<span></span>`}
@@ -222,8 +225,12 @@ class SolarLayoutCard extends HTMLElement {
     if (zo) zo.addEventListener("click", (e) => { e.stopPropagation(); setZoom(zoom - step); });
   }
 
-  static styles(cols, rows, zoom) {
+  static styles(cols, rows, zoom, fontScale) {
     const scale = (zoom || 100) / 100;
+    const fs = fontScale || 1;
+    // Text should barely shrink with zoom: only 30% of the zoom reduction is
+    // applied to the font, so at 60% zoom the text is still ~88% size, not 60%.
+    const textScale = (0.7 + 0.3 * scale) * fs;
     return `
       ha-card { padding: 12px; }
       .topbar {
@@ -301,11 +308,11 @@ class SolarLayoutCard extends HTMLElement {
         border-radius: 5px; line-height: 1.1;
         backdrop-filter: blur(1px);
       }
-      .reading .value { font-weight: 700; font-size: ${(0.95 * scale).toFixed(3)}rem; }
-      .reading .unit { font-size: ${(0.7 * scale).toFixed(3)}rem; margin-left: 2px; opacity: .9; }
+      .reading .value { font-weight: 700; font-size: ${(0.95 * textScale).toFixed(3)}rem; }
+      .reading .unit { font-size: ${(0.7 * textScale).toFixed(3)}rem; margin-left: 2px; opacity: .9; }
       .plabel {
         position: absolute; top: 3px; left: 5px; z-index: 1;
-        font-size: ${(0.65 * scale).toFixed(3)}rem;
+        font-size: ${(0.65 * textScale).toFixed(3)}rem;
         color: var(--fg, #fff); opacity: 0.75; font-weight: 600;
       }
       .empty { padding: 24px; text-align: center; color: var(--secondary-text-color); }
@@ -342,6 +349,7 @@ class SolarLayoutCardEditor extends HTMLElement {
     this._config.color_off = this._config.color_off || DEFAULT_COLOR_OFF;
     this._config.color_max = this._config.color_max || DEFAULT_COLOR_MAX;
     this._config.zoom = clamp(Number(this._config.zoom) || 100, 40, 100);
+    this._config.font_scale = clamp(Number(this._config.font_scale) || 100, 50, 200);
     // backfill per-panel Wp from the global reference for older configs
     this._config.panels.forEach((p) => {
       if (!(Number(p.wp) > 0)) p.wp = this._config.reference;
@@ -409,9 +417,15 @@ class SolarLayoutCardEditor extends HTMLElement {
             <input id="color_max" type="color" />
           </div>
         </div>
-        <div class="field">
-          <label>Standaard zoom (%)</label>
-          <input id="zoom" type="number" min="40" max="100" step="10" />
+        <div class="row2">
+          <div class="field">
+            <label>Standaard zoom (%)</label>
+            <input id="zoom" type="number" min="40" max="100" step="10" />
+          </div>
+          <div class="field">
+            <label>Tekstgrootte (%)</label>
+            <input id="font_scale" type="number" min="50" max="200" step="10" />
+          </div>
         </div>
 
         <div class="canvaswrap">
@@ -432,11 +446,13 @@ class SolarLayoutCardEditor extends HTMLElement {
     const offEl = sr.getElementById("color_off");
     const maxEl = sr.getElementById("color_max");
     const zoomEl = sr.getElementById("zoom");
+    const fontEl = sr.getElementById("font_scale");
     titleEl.value = this._config.title || "";
     refEl.value = this._config.reference;
     offEl.value = this._config.color_off;
     maxEl.value = this._config.color_max;
     zoomEl.value = this._config.zoom;
+    fontEl.value = this._config.font_scale;
 
     titleEl.addEventListener("input", (e) => {
       this._config.title = e.target.value;
@@ -456,6 +472,10 @@ class SolarLayoutCardEditor extends HTMLElement {
     });
     zoomEl.addEventListener("input", (e) => {
       this._config.zoom = clamp(Number(e.target.value) || 100, 40, 100);
+      this._emit();
+    });
+    fontEl.addEventListener("input", (e) => {
+      this._config.font_scale = clamp(Number(e.target.value) || 100, 50, 200);
       this._emit();
     });
     sr.getElementById("add").addEventListener("click", () => this._addPanel());
@@ -567,11 +587,29 @@ class SolarLayoutCardEditor extends HTMLElement {
       this._emit();
     });
 
-    const sel = document.createElement("select");
-    sel.className = "ent";
-    sel.addEventListener("change", (e) => {
-      p.entity = e.target.value;
-      this._emit();
+    // typed-search entity picker: text input backed by a <datalist>
+    const listId = `ent-list-${p.id}`;
+    const ent = document.createElement("input");
+    ent.className = "ent";
+    ent.type = "text";
+    ent.setAttribute("list", listId);
+    ent.placeholder = "zoek sensor...";
+    ent.value = p.entity || "";
+    const datalist = document.createElement("datalist");
+    datalist.id = listId;
+    const commit = (e) => {
+      const v = e.target.value.trim();
+      // accept exact match or clear; leave partials so the user can keep typing
+      const opts = this._entityList();
+      if (v === "" || opts.includes(v)) {
+        p.entity = v;
+        this._emit();
+      }
+    };
+    ent.addEventListener("change", commit);
+    ent.addEventListener("input", (e) => {
+      const opts = this._entityList();
+      if (opts.includes(e.target.value.trim())) commit(e);
     });
 
     const wp = document.createElement("input");
@@ -589,10 +627,11 @@ class SolarLayoutCardEditor extends HTMLElement {
 
     const orient = document.createElement("button");
     orient.className = "orient";
-    orient.textContent = p.orientation === "landscape" ? "⇋ landscape" : "⇅ portrait";
+    orient.textContent = p.orientation === "landscape" ? "liggend" : "staand";
+    orient.title = "Wissel staand/liggend";
     orient.addEventListener("click", () => {
       p.orientation = p.orientation === "landscape" ? "portrait" : "landscape";
-      orient.textContent = p.orientation === "landscape" ? "⇋ landscape" : "⇅ portrait";
+      orient.textContent = p.orientation === "landscape" ? "liggend" : "staand";
       const node = this._canvasNode(p.id);
       if (node) {
         const { w, h } = this._dims(p);
@@ -603,13 +642,19 @@ class SolarLayoutCardEditor extends HTMLElement {
       this._emit();
     });
 
+    const dup = document.createElement("button");
+    dup.className = "dup";
+    dup.title = "Dupliceer paneel";
+    dup.textContent = "⧉";
+    dup.addEventListener("click", () => this._duplicatePanel(p.id));
+
     const del = document.createElement("button");
     del.className = "del";
     del.title = "verwijderen";
     del.textContent = "✕";
     del.addEventListener("click", () => this._removePanel(p.id));
 
-    row.append(lbl, sel, wp, orient, del);
+    row.append(lbl, ent, datalist, wp, orient, dup, del);
     return row;
   }
 
@@ -621,15 +666,11 @@ class SolarLayoutCardEditor extends HTMLElement {
     const entities = this._entityList();
     if (!entities.length) return;
     this.shadowRoot.querySelectorAll(".prow").forEach((row) => {
-      const id = row.dataset.id;
-      const p = this._panel(id);
-      const sel = row.querySelector(".ent");
-      if (!sel || !p) return;
-      const current = p.entity || "";
-      sel.innerHTML =
-        `<option value="">— sensor —</option>` +
-        entities.map((e) => `<option value="${e}">${e}</option>`).join("");
-      sel.value = current;
+      const dl = row.querySelector("datalist");
+      if (!dl) return;
+      dl.innerHTML = entities
+        .map((e) => `<option value="${e}"></option>`)
+        .join("");
     });
     this._entitiesFilled = true;
   }
@@ -652,6 +693,34 @@ class SolarLayoutCardEditor extends HTMLElement {
       const muted = list.querySelector(".muted");
       if (muted) muted.remove();
       list.appendChild(this._makeRow(p));
+      this._entitiesFilled = false;
+      this._refreshEntityOptions();
+    }
+    this._emit();
+  }
+
+  _duplicatePanel(id) {
+    const src = this._panel(id);
+    if (!src) return;
+    // copy sensor, Wp and orientation; offset position slightly so it's visible
+    const { w } = this._dims(src);
+    const copy = {
+      id: uid(),
+      x: clamp(src.x + w, 0, 30),
+      y: src.y,
+      orientation: src.orientation,
+      entity: src.entity,
+      wp: src.wp,
+      label: src.label ? src.label + " kopie" : "",
+    };
+    this._config.panels.push(copy);
+    const canvas = this.shadowRoot.getElementById("canvas");
+    if (canvas) canvas.appendChild(this._makePanelNode(copy));
+    const list = this.shadowRoot.getElementById("list");
+    if (list) {
+      const muted = list.querySelector(".muted");
+      if (muted) muted.remove();
+      list.appendChild(this._makeRow(copy));
       this._entitiesFilled = false;
       this._refreshEntityOptions();
     }
@@ -702,7 +771,8 @@ class SolarLayoutCardEditor extends HTMLElement {
       .epanel .tag { font-size:.7rem; color:rgba(0,0,0,.7); font-weight:600; pointer-events:none; }
       .add { align-self:flex-start; cursor:pointer; }
       .list { display:flex; flex-direction:column; gap:6px; }
-      .prow { display:grid; grid-template-columns: 60px 1fr 70px auto auto; gap:6px; align-items:center; }
+      .prow { display:grid; grid-template-columns: 55px 1fr 62px auto auto auto; gap:6px; align-items:center; }
+      .prow datalist { display:none; }
       .prow .lbl { width:100%; }
       .prow .wp { width:100%; text-align:right; }
       .prow button { cursor:pointer; }

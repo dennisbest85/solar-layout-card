@@ -1,7 +1,7 @@
 # Solar Layout Card
 
 ![hacs](https://img.shields.io/badge/HACS-Dashboard-41BDF5.svg)
-![version](https://img.shields.io/badge/version-1.0.3-f4c40f.svg)
+![version](https://img.shields.io/badge/version-1.0.4-f4c40f.svg)
 
 Een Home Assistant Lovelace-card die een legplan van je zonnepanelen toont, met de
 live PV-opbrengst in elk paneel. Panelen zijn per stuk portrait of landscape
@@ -12,7 +12,9 @@ te plaatsen en de indeling maak je met een drag and drop editor.
 - Per paneel een sensor koppelen; waarde en eenheid worden getoond.
 - Panelen kleuren mee met de opbrengst ten opzichte van een Wp-referentie (per paneel instelbaar).
 - Configureerbare kleuren: donker als het paneel uit is, oplopend naar lichtblauw bij veel zon (Enphase-stijl).
-- Zoomknop om grote opstellingen compacter te maken (100% tot 40%), tekst schaalt mee.
+- Zoomknop om grote opstellingen compacter te maken (100% tot 40%).
+- Typed zoeken bij de sensorkeuze en een knop om een paneel te dupliceren (neemt sensor, Wp en orientatie mee).
+- Instelbare tekstgrootte, los van de zoom.
 - Portrait/landscape per paneel.
 - Visuele editor met slepen en snap-to-grid.
 - Klik op een paneel opent de more-info dialoog van de sensor.
@@ -32,6 +34,7 @@ reference: 400        # standaard-Wp voor nieuwe panelen
 color_off: "#0b1f3a"  # donker = uit / geen zon
 color_max: "#6fc3ff"  # lichtblauw = maximale opbrengst
 zoom: 100             # 40 t/m 100
+font_scale: 100       # tekstgrootte in procent (50 t/m 200)
 panels:
   - id: a1
     x: 0
@@ -57,6 +60,7 @@ panels:
 | `color_off` | string | `#0b1f3a` | Kleur bij uit / geen opbrengst. |
 | `color_max` | string | `#6fc3ff` | Kleur bij maximale opbrengst (bij Wp). |
 | `zoom`      | number | `100`     | Startzoom in procent (40 tot 100). |
+| `font_scale`| number | `100`     | Tekstgrootte in procent (50 tot 200). |
 | `panels`    | list   | `[]`      | Lijst met panelen. |
 
 Per paneel: `id`, `x`, `y` (rastercoordinaten), `orientation` (`portrait`/`landscape`),
