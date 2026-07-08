@@ -1,5 +1,5 @@
-/*! solar-layout-card v1.0.2 | MIT License */
-const VERSION = "1.0.2";
+/*! solar-layout-card v1.0.3 | MIT License */
+const VERSION = "1.0.3";
 
 /* ---------- constants ---------- */
 const GRID = 20;                 // px per grid cell in the editor
@@ -22,13 +22,51 @@ function fmt(hass, entity) {
   return { val, unit };
 }
 
-function colorFor(ratio) {
-  if (!Number.isFinite(ratio)) return "var(--disabled-text-color, #888)";
+// Enphase-style defaults: dark navy when off, light blue at full production.
+const DEFAULT_COLOR_OFF = "#0b1f3a";   // donker / uit
+const DEFAULT_COLOR_MAX = "#6fc3ff";   // lichtblauw / veel zon
+
+// parse "#rgb" / "#rrggbb" to [r,g,b]
+function hexToRgb(hex) {
+  if (typeof hex !== "string") return null;
+  let h = hex.trim().replace(/^#/, "");
+  if (h.length === 3) h = h.split("").map((c) => c + c).join("");
+  if (h.length !== 6 || /[^0-9a-fA-F]/.test(h)) return null;
+  return [
+    parseInt(h.slice(0, 2), 16),
+    parseInt(h.slice(2, 4), 16),
+    parseInt(h.slice(4, 6), 16),
+  ];
+}
+
+function rgbToCss([r, g, b]) {
+  return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
+}
+
+// interpolate between colorOff and colorMax by ratio 0..1
+function colorFor(ratio, colorOff, colorMax) {
+  const a = hexToRgb(colorOff) || hexToRgb(DEFAULT_COLOR_OFF);
+  const b = hexToRgb(colorMax) || hexToRgb(DEFAULT_COLOR_MAX);
+  if (!Number.isFinite(ratio)) return rgbToCss(a); // no data -> "off" colour
   const r = clamp(ratio, 0, 1);
-  const hue = 48;
-  const light = 92 - r * 45;
-  const sat = 20 + r * 75;
-  return `hsl(${hue}, ${sat}%, ${light}%)`;
+  return rgbToCss([
+    a[0] + (b[0] - a[0]) * r,
+    a[1] + (b[1] - a[1]) * r,
+    a[2] + (b[2] - a[2]) * r,
+  ]);
+}
+
+// pick readable text colour (black/white) for a given ratio's background
+function textColorFor(ratio, colorOff, colorMax) {
+  const a = hexToRgb(colorOff) || hexToRgb(DEFAULT_COLOR_OFF);
+  const b = hexToRgb(colorMax) || hexToRgb(DEFAULT_COLOR_MAX);
+  const r = Number.isFinite(ratio) ? clamp(ratio, 0, 1) : 0;
+  const lum =
+    (0.299 * (a[0] + (b[0] - a[0]) * r) +
+      0.587 * (a[1] + (b[1] - a[1]) * r) +
+      0.114 * (a[2] + (b[2] - a[2]) * r)) /
+    255;
+  return lum > 0.6 ? "#111" : "#fff";
 }
 
 /* =====================================================================
@@ -51,6 +89,9 @@ class SolarLayoutCard extends HTMLElement {
       type: `custom:${CARD_TAG}`,
       title: "Zonnepanelen",
       reference: 400,
+      color_off: DEFAULT_COLOR_OFF,
+      color_max: DEFAULT_COLOR_MAX,
+      zoom: 100,
       panels: [
         { id: uid(), x: 0, y: 0, orientation: "portrait", entity: "", label: "1", wp: 400 },
         { id: uid(), x: 4, y: 0, orientation: "portrait", entity: "", label: "2", wp: 400 },
@@ -63,6 +104,9 @@ class SolarLayoutCard extends HTMLElement {
     this._config = {
       title: config.title ?? "",
       reference: Number(config.reference) || 400,
+      color_off: config.color_off || DEFAULT_COLOR_OFF,
+      color_max: config.color_max || DEFAULT_COLOR_MAX,
+      zoom: clamp(Number(config.zoom) || 100, 40, 100),
       panels: (config.panels || []).map((p) => ({
         id: p.id || uid(),
         x: Number(p.x) || 0,
@@ -103,6 +147,9 @@ class SolarLayoutCard extends HTMLElement {
     if (!this._config) return;
     const hass = this._hass;
     const { cols, rows } = this._bounds();
+    const off = this._config.color_off;
+    const max = this._config.color_max;
+    const zoom = clamp(Number(this._config.zoom) || 100, 40, 100);
 
     const panelsHtml = this._config.panels
       .map((p) => {
@@ -113,12 +160,14 @@ class SolarLayoutCard extends HTMLElement {
           ? Number(hass.states[p.entity].state)
           : NaN;
         const wp = Number(p.wp) > 0 ? Number(p.wp) : this._config.reference;
-        const bg = colorFor(num / wp);
+        const ratio = num / wp;
+        const bg = colorFor(ratio, off, max);
+        const fg = textColorFor(ratio, off, max);
         return `
           <div class="panel ${p.orientation}"
                style="grid-column:${p.x + 1}/span ${w};
                       grid-row:${p.y + 1}/span ${h};
-                      background:${bg};"
+                      background:${bg}; --fg:${fg};"
                data-entity="${p.entity}">
             <div class="cells"></div>
             <div class="reading">
@@ -131,10 +180,19 @@ class SolarLayoutCard extends HTMLElement {
       .join("");
 
     this.shadowRoot.innerHTML = `
-      <style>${SolarLayoutCard.styles(cols, rows)}</style>
+      <style>${SolarLayoutCard.styles(cols, rows, zoom)}</style>
       <ha-card>
-        ${this._config.title ? `<div class="header">${this._config.title}</div>` : ""}
-        <div class="grid">${panelsHtml || `<div class="empty">Geen panelen — open de editor.</div>`}</div>
+        <div class="topbar">
+          ${this._config.title ? `<div class="header">${this._config.title}</div>` : `<span></span>`}
+          <div class="zoombar" title="Zoom">
+            <button class="zoom-out" aria-label="Verklein">-</button>
+            <span class="zoom-val">${zoom}%</span>
+            <button class="zoom-in" aria-label="Vergroot">+</button>
+          </div>
+        </div>
+        <div class="gridwrap">
+          <div class="grid">${panelsHtml || `<div class="empty">Geen panelen. Open de editor.</div>`}</div>
+        </div>
       </ha-card>
     `;
 
@@ -151,54 +209,104 @@ class SolarLayoutCard extends HTMLElement {
         );
       });
     });
+
+    // zoom buttons adjust the runtime zoom without rewriting the config
+    const step = 10;
+    const setZoom = (z) => {
+      this._config.zoom = clamp(z, 40, 100);
+      this._render();
+    };
+    const zi = this.shadowRoot.querySelector(".zoom-in");
+    const zo = this.shadowRoot.querySelector(".zoom-out");
+    if (zi) zi.addEventListener("click", (e) => { e.stopPropagation(); setZoom(zoom + step); });
+    if (zo) zo.addEventListener("click", (e) => { e.stopPropagation(); setZoom(zoom - step); });
   }
 
-  static styles(cols, rows) {
+  static styles(cols, rows, zoom) {
+    const scale = (zoom || 100) / 100;
     return `
       ha-card { padding: 12px; }
+      .topbar {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 0 2px 10px;
+      }
       .header {
-        font-size: 1.15rem; font-weight: 600; padding: 4px 4px 12px;
+        font-size: 1.15rem; font-weight: 600;
         color: var(--primary-text-color);
+      }
+      .zoombar {
+        display: inline-flex; align-items: center; gap: 6px;
+        color: var(--secondary-text-color); font-size: .8rem;
+      }
+      .zoombar button {
+        width: 26px; height: 26px; border-radius: 6px; cursor: pointer;
+        border: 1px solid var(--divider-color, #ccc);
+        background: var(--card-background-color, #fff);
+        color: var(--primary-text-color); font-size: 1rem; line-height: 1;
+        display: inline-flex; align-items: center; justify-content: center;
+      }
+      .zoombar button:hover { filter: brightness(0.95); }
+      .zoom-val { min-width: 38px; text-align: center; }
+      .gridwrap {
+        width: ${(scale * 100).toFixed(2)}%;
       }
       .grid {
         display: grid;
         grid-template-columns: repeat(${cols}, 1fr);
-        grid-auto-rows: minmax(14px, auto);
-        gap: 4px;
+        grid-auto-rows: minmax(${Math.max(8, Math.round(14 * scale))}px, auto);
+        gap: ${Math.max(2, Math.round(4 * scale))}px;
         aspect-ratio: ${cols} / ${rows};
         width: 100%;
       }
       .panel {
         position: relative;
-        border-radius: 6px;
-        border: 1px solid rgba(0,0,0,0.25);
+        border-radius: 4px;
+        border: 1px solid rgba(0,0,0,0.45);
         cursor: pointer;
         overflow: hidden;
         display: flex; align-items: center; justify-content: center;
-        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15);
-        transition: transform .12s ease, filter .12s ease;
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+        transition: transform .12s ease, filter .12s ease, background .3s ease;
       }
-      .panel:hover { transform: translateY(-1px); filter: brightness(1.05); }
+      .panel:hover { transform: translateY(-1px); filter: brightness(1.08); }
+      /* realistic solar cells: 6 x 10 grid for portrait, framed with a thin bus bar look */
       .panel .cells {
-        position: absolute; inset: 3px;
+        position: absolute; inset: 2px;
         background-image:
-          linear-gradient(rgba(0,0,0,0.18) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(0,0,0,0.18) 1px, transparent 1px);
-        background-size: 50% 25%;
+          linear-gradient(rgba(255,255,255,0.16) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255,255,255,0.16) 1px, transparent 1px),
+          linear-gradient(rgba(0,0,0,0.28) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0,0,0,0.28) 1px, transparent 1px);
+        background-size:
+          calc(100% / 6) calc(100% / 10),
+          calc(100% / 6) calc(100% / 10),
+          calc(100% / 6) calc(100% / 10),
+          calc(100% / 6) calc(100% / 10);
+        background-position: 0 0, 0 0, 0.5px 0.5px, 0.5px 0.5px;
         pointer-events: none;
+        opacity: 0.9;
       }
-      .panel.landscape .cells { background-size: 25% 50%; }
+      /* landscape: swap the cell grid to 10 x 6 */
+      .panel.landscape .cells {
+        background-size:
+          calc(100% / 10) calc(100% / 6),
+          calc(100% / 10) calc(100% / 6),
+          calc(100% / 10) calc(100% / 6),
+          calc(100% / 10) calc(100% / 6);
+      }
       .reading {
         position: relative; z-index: 1; text-align: center;
-        background: rgba(0,0,0,0.45); color: #fff;
-        padding: 2px 6px; border-radius: 5px; line-height: 1.1;
+        background: rgba(0,0,0,0.42); color: var(--fg, #fff);
+        padding: ${Math.max(1, Math.round(2 * scale))}px ${Math.max(3, Math.round(6 * scale))}px;
+        border-radius: 5px; line-height: 1.1;
         backdrop-filter: blur(1px);
       }
-      .reading .value { font-weight: 700; font-size: 0.95rem; }
-      .reading .unit { font-size: 0.7rem; margin-left: 2px; opacity: .9; }
+      .reading .value { font-weight: 700; font-size: ${(0.95 * scale).toFixed(3)}rem; }
+      .reading .unit { font-size: ${(0.7 * scale).toFixed(3)}rem; margin-left: 2px; opacity: .9; }
       .plabel {
         position: absolute; top: 3px; left: 5px; z-index: 1;
-        font-size: 0.65rem; color: rgba(0,0,0,0.6); font-weight: 600;
+        font-size: ${(0.65 * scale).toFixed(3)}rem;
+        color: var(--fg, #fff); opacity: 0.75; font-weight: 600;
       }
       .empty { padding: 24px; text-align: center; color: var(--secondary-text-color); }
     `;
@@ -231,6 +339,9 @@ class SolarLayoutCardEditor extends HTMLElement {
     this._config = JSON.parse(JSON.stringify(config || {}));
     this._config.panels = this._config.panels || [];
     this._config.reference = this._config.reference || 400;
+    this._config.color_off = this._config.color_off || DEFAULT_COLOR_OFF;
+    this._config.color_max = this._config.color_max || DEFAULT_COLOR_MAX;
+    this._config.zoom = clamp(Number(this._config.zoom) || 100, 40, 100);
     // backfill per-panel Wp from the global reference for older configs
     this._config.panels.forEach((p) => {
       if (!(Number(p.wp) > 0)) p.wp = this._config.reference;
@@ -288,6 +399,20 @@ class SolarLayoutCardEditor extends HTMLElement {
           <label>Standaard Wp voor nieuwe panelen (kleurschaal is per paneel)</label>
           <input id="reference" type="number" min="1" />
         </div>
+        <div class="row2">
+          <div class="field">
+            <label>Kleur uit / geen zon</label>
+            <input id="color_off" type="color" />
+          </div>
+          <div class="field">
+            <label>Kleur max opbrengst</label>
+            <input id="color_max" type="color" />
+          </div>
+        </div>
+        <div class="field">
+          <label>Standaard zoom (%)</label>
+          <input id="zoom" type="number" min="40" max="100" step="10" />
+        </div>
 
         <div class="canvaswrap">
           <div class="hint">Sleep de panelen. Ze snappen op het raster.</div>
@@ -304,8 +429,14 @@ class SolarLayoutCardEditor extends HTMLElement {
     const sr = this.shadowRoot;
     const titleEl = sr.getElementById("title");
     const refEl = sr.getElementById("reference");
+    const offEl = sr.getElementById("color_off");
+    const maxEl = sr.getElementById("color_max");
+    const zoomEl = sr.getElementById("zoom");
     titleEl.value = this._config.title || "";
     refEl.value = this._config.reference;
+    offEl.value = this._config.color_off;
+    maxEl.value = this._config.color_max;
+    zoomEl.value = this._config.zoom;
 
     titleEl.addEventListener("input", (e) => {
       this._config.title = e.target.value;
@@ -313,6 +444,18 @@ class SolarLayoutCardEditor extends HTMLElement {
     });
     refEl.addEventListener("input", (e) => {
       this._config.reference = Number(e.target.value) || 400;
+      this._emit();
+    });
+    offEl.addEventListener("input", (e) => {
+      this._config.color_off = e.target.value;
+      this._emit();
+    });
+    maxEl.addEventListener("input", (e) => {
+      this._config.color_max = e.target.value;
+      this._emit();
+    });
+    zoomEl.addEventListener("input", (e) => {
+      this._config.zoom = clamp(Number(e.target.value) || 100, 40, 100);
       this._emit();
     });
     sr.getElementById("add").addEventListener("click", () => this._addPanel());
@@ -528,6 +671,8 @@ class SolarLayoutCardEditor extends HTMLElement {
     return `
       .wrap { display:flex; flex-direction:column; gap:12px; padding:4px; }
       .field { display:flex; flex-direction:column; gap:4px; }
+      .row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+      .row2 input[type=color] { height:34px; padding:2px; cursor:pointer; }
       label { font-size:.8rem; color:var(--secondary-text-color); }
       input, select, button {
         font: inherit; padding:6px 8px; border-radius:6px;

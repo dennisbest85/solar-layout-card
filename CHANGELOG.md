@@ -4,6 +4,16 @@ Alle noemenswaardige wijzigingen aan deze card worden hier bijgehouden.
 Formaat volgt [Keep a Changelog](https://keepachangelog.com/) en
 [Semantic Versioning](https://semver.org/).
 
+## [1.0.3] - 2026-07-08
+### Toegevoegd
+- Configureerbare kleurschaal (Enphase-stijl): een instelbare kleur voor "uit / geen zon" (standaard donkerblauw) en voor maximale opbrengst (standaard lichtblauw). De paneelkleur loopt vloeiend tussen beide op basis van opbrengst t.o.v. Wp.
+- Tekstkleur in het paneel past zich automatisch aan (donker of licht) voor leesbaarheid.
+- Zoomknop op de card: van 100% tot 40% om grote opstellingen compacter te maken. De Watt-tekst schaalt mee. Standaard zoom is instelbaar in de editor.
+### Gewijzigd
+- Realistischer paneelraster: 6x10 celraster (10x6 in landscape) i.p.v. 8 vakken, zodat een paneel meer op een echt zonnepaneel lijkt.
+### Opgelost
+- README werd niet weergegeven in HACS door een ongeldige byte (kapot teken) in het bestand. README is nu opgeslagen als schone UTF-8/ASCII.
+
 ## [1.0.2] - 2026-07-08
 ### Toegevoegd
 - Wp is nu per paneel instelbaar. Zo kun je bijv. 400 Wp- en 370 Wp-panelen in één legplan mengen; elk paneel wordt op zijn eigen piekvermogen geschaald.
