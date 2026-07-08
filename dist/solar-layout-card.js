@@ -1,5 +1,5 @@
-/*! solar-layout-card v1.0.0 | MIT License */
-const VERSION = "1.0.0";
+/*! solar-layout-card v1.0.2 | MIT License */
+const VERSION = "1.0.2";
 
 /* ---------- constants ---------- */
 const GRID = 20;                 // px per grid cell in the editor
@@ -22,14 +22,12 @@ function fmt(hass, entity) {
   return { val, unit };
 }
 
-// colour ramp based on production relative to a reference (Wp or W)
 function colorFor(ratio) {
   if (!Number.isFinite(ratio)) return "var(--disabled-text-color, #888)";
   const r = clamp(ratio, 0, 1);
-  // grey (idle) -> yellow -> orange
-  const hue = 48;                       // warm yellow
-  const light = 92 - r * 45;            // 92% -> 47%
-  const sat = 20 + r * 75;              // muted -> saturated
+  const hue = 48;
+  const light = 92 - r * 45;
+  const sat = 20 + r * 75;
   return `hsl(${hue}, ${sat}%, ${light}%)`;
 }
 
@@ -52,10 +50,10 @@ class SolarLayoutCard extends HTMLElement {
     return {
       type: `custom:${CARD_TAG}`,
       title: "Zonnepanelen",
-      reference: 400, // reference Wp/W used for colour scaling
+      reference: 400,
       panels: [
-        { id: uid(), x: 0, y: 0, orientation: "portrait", entity: "", label: "1" },
-        { id: uid(), x: 4, y: 0, orientation: "portrait", entity: "", label: "2" },
+        { id: uid(), x: 0, y: 0, orientation: "portrait", entity: "", label: "1", wp: 400 },
+        { id: uid(), x: 4, y: 0, orientation: "portrait", entity: "", label: "2", wp: 400 },
       ],
     };
   }
@@ -65,7 +63,6 @@ class SolarLayoutCard extends HTMLElement {
     this._config = {
       title: config.title ?? "",
       reference: Number(config.reference) || 400,
-      unit_mode: config.unit_mode || "auto",
       panels: (config.panels || []).map((p) => ({
         id: p.id || uid(),
         x: Number(p.x) || 0,
@@ -73,6 +70,8 @@ class SolarLayoutCard extends HTMLElement {
         orientation: p.orientation === "landscape" ? "landscape" : "portrait",
         entity: p.entity || "",
         label: p.label || "",
+        // per-panel Wp; fall back to the global reference for older configs
+        wp: Number(p.wp) > 0 ? Number(p.wp) : (Number(config.reference) || 400),
       })),
     };
     this._render();
@@ -104,7 +103,6 @@ class SolarLayoutCard extends HTMLElement {
     if (!this._config) return;
     const hass = this._hass;
     const { cols, rows } = this._bounds();
-    const ref = this._config.reference;
 
     const panelsHtml = this._config.panels
       .map((p) => {
@@ -114,7 +112,8 @@ class SolarLayoutCard extends HTMLElement {
         const num = hass && p.entity && hass.states[p.entity]
           ? Number(hass.states[p.entity].state)
           : NaN;
-        const bg = colorFor(num / ref);
+        const wp = Number(p.wp) > 0 ? Number(p.wp) : this._config.reference;
+        const bg = colorFor(num / wp);
         return `
           <div class="panel ${p.orientation}"
                style="grid-column:${p.x + 1}/span ${w};
@@ -139,7 +138,6 @@ class SolarLayoutCard extends HTMLElement {
       </ha-card>
     `;
 
-    // clicking a panel opens its more-info dialog
     this.shadowRoot.querySelectorAll(".panel").forEach((el) => {
       el.addEventListener("click", () => {
         const entity = el.getAttribute("data-entity");
@@ -208,7 +206,15 @@ class SolarLayoutCard extends HTMLElement {
 }
 
 /* =====================================================================
- * The visual editor (drag & drop)
+ * The visual editor (drag & drop)  — v1.0.1 rewrite
+ *
+ * Fixes vs v1.0.0:
+ *  - DOM scaffold built ONCE; we never rebuild canvas/list on every change,
+ *    so pointer-capture survives a drag and <select> dropdowns stay open.
+ *  - Dragging mutates only the dragged element's inline style; config is
+ *    committed on pointerup without a re-render.
+ *  - Orientation toggle updates just that panel node + button text, so a
+ *    single click is enough.
  * ===================================================================== */
 class SolarLayoutCardEditor extends HTMLElement {
   constructor() {
@@ -216,19 +222,27 @@ class SolarLayoutCardEditor extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this._config = null;
     this._hass = null;
+    this._built = false;
     this._drag = null;
+    this._entitiesFilled = false;
   }
 
   setConfig(config) {
     this._config = JSON.parse(JSON.stringify(config || {}));
     this._config.panels = this._config.panels || [];
     this._config.reference = this._config.reference || 400;
-    this._render();
+    // backfill per-panel Wp from the global reference for older configs
+    this._config.panels.forEach((p) => {
+      if (!(Number(p.wp) > 0)) p.wp = this._config.reference;
+    });
+    this._built = false;
+    this._build();
   }
 
   set hass(hass) {
+    const hadHass = !!this._hass;
     this._hass = hass;
-    if (this._config) this._render();
+    if (this._built && !this._entitiesFilled) this._refreshEntityOptions();
   }
 
   _emit() {
@@ -248,155 +262,266 @@ class SolarLayoutCardEditor extends HTMLElement {
       .sort();
   }
 
-  _addPanel() {
-    this._config.panels.push({
-      id: uid(),
-      x: 0,
-      y: 0,
-      orientation: "portrait",
-      entity: "",
-      label: String(this._config.panels.length + 1),
-    });
-    this._emit();
-    this._render();
+  _panel(id) {
+    return this._config.panels.find((p) => p.id === id);
   }
 
-  _removePanel(id) {
-    this._config.panels = this._config.panels.filter((p) => p.id !== id);
-    this._emit();
-    this._render();
+  _dims(p) {
+    return p.orientation === "landscape"
+      ? { w: PANEL_H, h: PANEL_W }
+      : { w: PANEL_W, h: PANEL_H };
   }
 
-  _updatePanel(id, patch) {
-    const p = this._config.panels.find((x) => x.id === id);
-    if (!p) return;
-    Object.assign(p, patch);
-    this._emit();
-    this._render();
-  }
-
-  _render() {
+  /* ---- one-time scaffold ---- */
+  _build() {
     if (!this._config) return;
     const cols = 16, rows = 16;
-    const entities = this._entityList();
-
-    const panelsHtml = this._config.panels
-      .map((p) => {
-        const w = p.orientation === "landscape" ? PANEL_H : PANEL_W;
-        const h = p.orientation === "landscape" ? PANEL_W : PANEL_H;
-        return `
-          <div class="epanel ${p.orientation}"
-               data-id="${p.id}"
-               style="left:${p.x * GRID}px; top:${p.y * GRID}px;
-                      width:${w * GRID}px; height:${h * GRID}px;">
-            <span class="tag">${p.label || ""}</span>
-          </div>`;
-      })
-      .join("");
-
-    const rowsHtml = this._config.panels
-      .map((p) => {
-        const opts = entities
-          .map((e) => `<option value="${e}" ${e === p.entity ? "selected" : ""}>${e}</option>`)
-          .join("");
-        return `
-          <div class="prow" data-id="${p.id}">
-            <input class="lbl" type="text" value="${p.label || ""}" placeholder="label" />
-            <select class="ent">
-              <option value="">— sensor —</option>
-              ${opts}
-            </select>
-            <button class="orient">${p.orientation === "landscape" ? "⇋ landscape" : "⇅ portrait"}</button>
-            <button class="del" title="verwijderen">✕</button>
-          </div>`;
-      })
-      .join("");
 
     this.shadowRoot.innerHTML = `
       <style>${SolarLayoutCardEditor.styles(cols, rows)}</style>
       <div class="wrap">
         <div class="field">
           <label>Titel</label>
-          <input id="title" type="text" value="${this._config.title || ""}" />
+          <input id="title" type="text" />
         </div>
         <div class="field">
-          <label>Referentie (Wp/W voor kleurschaal)</label>
-          <input id="reference" type="number" value="${this._config.reference}" />
+          <label>Standaard Wp voor nieuwe panelen (kleurschaal is per paneel)</label>
+          <input id="reference" type="number" min="1" />
         </div>
 
         <div class="canvaswrap">
-          <div class="hint">Sleep de panelen. Snapt op een raster.</div>
-          <div class="canvas">${panelsHtml}</div>
+          <div class="hint">Sleep de panelen. Ze snappen op het raster.</div>
+          <div class="canvas" id="canvas"></div>
         </div>
 
         <button id="add" class="add">+ Paneel toevoegen</button>
 
-        <div class="list">${rowsHtml || `<div class="muted">Nog geen panelen.</div>`}</div>
+        <div class="list" id="list"></div>
         <div class="ver">solar-layout-card v${VERSION}</div>
       </div>
     `;
 
     const sr = this.shadowRoot;
-    sr.getElementById("title").addEventListener("input", (e) => {
-      this._config.title = e.target.value; this._emit();
+    const titleEl = sr.getElementById("title");
+    const refEl = sr.getElementById("reference");
+    titleEl.value = this._config.title || "";
+    refEl.value = this._config.reference;
+
+    titleEl.addEventListener("input", (e) => {
+      this._config.title = e.target.value;
+      this._emit();
     });
-    sr.getElementById("reference").addEventListener("input", (e) => {
-      this._config.reference = Number(e.target.value) || 400; this._emit();
+    refEl.addEventListener("input", (e) => {
+      this._config.reference = Number(e.target.value) || 400;
+      this._emit();
     });
     sr.getElementById("add").addEventListener("click", () => this._addPanel());
 
-    sr.querySelectorAll(".prow").forEach((row) => {
-      const id = row.getAttribute("data-id");
-      row.querySelector(".lbl").addEventListener("input", (e) =>
-        this._updatePanel(id, { label: e.target.value }));
-      row.querySelector(".ent").addEventListener("change", (e) =>
-        this._updatePanel(id, { entity: e.target.value }));
-      row.querySelector(".orient").addEventListener("click", () => {
-        const p = this._config.panels.find((x) => x.id === id);
-        this._updatePanel(id, {
-          orientation: p.orientation === "landscape" ? "portrait" : "landscape",
-        });
-      });
-      row.querySelector(".del").addEventListener("click", () => this._removePanel(id));
-    });
-
-    this._wireDrag();
+    this._built = true;
+    this._entitiesFilled = false;
+    this._renderCanvas();
+    this._renderList();
   }
 
-  _wireDrag() {
-    const canvas = this.shadowRoot.querySelector(".canvas");
-    canvas.querySelectorAll(".epanel").forEach((el) => {
-      el.addEventListener("pointerdown", (ev) => {
-        ev.preventDefault();
-        el.setPointerCapture(ev.pointerId);
-        const id = el.getAttribute("data-id");
-        const p = this._config.panels.find((x) => x.id === id);
-        const rect = canvas.getBoundingClientRect();
-        this._drag = {
-          id, el,
-          offX: ev.clientX - rect.left - p.x * GRID,
-          offY: ev.clientY - rect.top - p.y * GRID,
-          rect,
-        };
-        el.classList.add("dragging");
-      });
-      el.addEventListener("pointermove", (ev) => {
-        if (!this._drag || this._drag.id !== el.getAttribute("data-id")) return;
-        const { rect, offX, offY } = this._drag;
-        const x = clamp(Math.round((ev.clientX - rect.left - offX) / GRID), 0, 30);
-        const y = clamp(Math.round((ev.clientY - rect.top - offY) / GRID), 0, 30);
-        el.style.left = x * GRID + "px";
-        el.style.top = y * GRID + "px";
-        this._drag.x = x; this._drag.y = y;
-      });
-      el.addEventListener("pointerup", () => {
-        if (!this._drag) return;
-        const { id, x, y } = this._drag;
-        el.classList.remove("dragging");
-        this._drag = null;
-        if (x != null) this._updatePanel(id, { x, y });
-      });
+  /* ---- canvas nodes ---- */
+  _renderCanvas() {
+    const canvas = this.shadowRoot.getElementById("canvas");
+    if (!canvas) return;
+    canvas.innerHTML = "";
+    this._config.panels.forEach((p) => canvas.appendChild(this._makePanelNode(p)));
+  }
+
+  _makePanelNode(p) {
+    const { w, h } = this._dims(p);
+    const el = document.createElement("div");
+    el.className = `epanel ${p.orientation}`;
+    el.dataset.id = p.id;
+    el.style.left = p.x * GRID + "px";
+    el.style.top = p.y * GRID + "px";
+    el.style.width = w * GRID + "px";
+    el.style.height = h * GRID + "px";
+    el.innerHTML = `<span class="tag">${p.label || ""}</span>`;
+    this._attachDrag(el);
+    return el;
+  }
+
+  _attachDrag(el) {
+    el.addEventListener("pointerdown", (ev) => {
+      if (ev.button !== undefined && ev.button !== 0) return;
+      ev.preventDefault();
+      const id = el.dataset.id;
+      const p = this._panel(id);
+      if (!p) return;
+      const canvas = this.shadowRoot.getElementById("canvas");
+      const rect = canvas.getBoundingClientRect();
+      el.setPointerCapture(ev.pointerId);
+      this._drag = {
+        id, el,
+        pointerId: ev.pointerId,
+        rect,
+        offX: ev.clientX - rect.left - p.x * GRID,
+        offY: ev.clientY - rect.top - p.y * GRID,
+        x: p.x, y: p.y,
+        moved: false,
+      };
+      el.classList.add("dragging");
     });
+
+    el.addEventListener("pointermove", (ev) => {
+      const d = this._drag;
+      if (!d || d.el !== el || ev.pointerId !== d.pointerId) return;
+      ev.preventDefault();
+      const nx = clamp(Math.round((ev.clientX - d.rect.left - d.offX) / GRID), 0, 30);
+      const ny = clamp(Math.round((ev.clientY - d.rect.top - d.offY) / GRID), 0, 30);
+      if (nx !== d.x || ny !== d.y) d.moved = true;
+      d.x = nx; d.y = ny;
+      el.style.left = nx * GRID + "px";
+      el.style.top = ny * GRID + "px";
+    });
+
+    const finish = () => {
+      const d = this._drag;
+      if (!d || d.el !== el) return;
+      try { el.releasePointerCapture(d.pointerId); } catch (e) {}
+      el.classList.remove("dragging");
+      this._drag = null;
+      if (d.moved) {
+        const p = this._panel(d.id);
+        if (p) { p.x = d.x; p.y = d.y; this._emit(); }
+      }
+    };
+    el.addEventListener("pointerup", finish);
+    el.addEventListener("pointercancel", finish);
+  }
+
+  /* ---- side list ---- */
+  _renderList() {
+    const list = this.shadowRoot.getElementById("list");
+    if (!list) return;
+    list.innerHTML = "";
+    if (!this._config.panels.length) {
+      list.innerHTML = `<div class="muted">Nog geen panelen.</div>`;
+      return;
+    }
+    this._config.panels.forEach((p) => list.appendChild(this._makeRow(p)));
+    this._refreshEntityOptions();
+  }
+
+  _makeRow(p) {
+    const row = document.createElement("div");
+    row.className = "prow";
+    row.dataset.id = p.id;
+
+    const lbl = document.createElement("input");
+    lbl.className = "lbl";
+    lbl.type = "text";
+    lbl.placeholder = "label";
+    lbl.value = p.label || "";
+    lbl.addEventListener("input", (e) => {
+      p.label = e.target.value;
+      const node = this._canvasNode(p.id);
+      if (node) node.querySelector(".tag").textContent = p.label;
+      this._emit();
+    });
+
+    const sel = document.createElement("select");
+    sel.className = "ent";
+    sel.addEventListener("change", (e) => {
+      p.entity = e.target.value;
+      this._emit();
+    });
+
+    const wp = document.createElement("input");
+    wp.className = "wp";
+    wp.type = "number";
+    wp.min = "1";
+    wp.placeholder = "Wp";
+    wp.title = "Piekvermogen van dit paneel in Wp";
+    wp.value = p.wp || "";
+    wp.addEventListener("input", (e) => {
+      const v = Number(e.target.value);
+      p.wp = v > 0 ? v : (this._config.reference || 400);
+      this._emit();
+    });
+
+    const orient = document.createElement("button");
+    orient.className = "orient";
+    orient.textContent = p.orientation === "landscape" ? "⇋ landscape" : "⇅ portrait";
+    orient.addEventListener("click", () => {
+      p.orientation = p.orientation === "landscape" ? "portrait" : "landscape";
+      orient.textContent = p.orientation === "landscape" ? "⇋ landscape" : "⇅ portrait";
+      const node = this._canvasNode(p.id);
+      if (node) {
+        const { w, h } = this._dims(p);
+        node.className = `epanel ${p.orientation}`;
+        node.style.width = w * GRID + "px";
+        node.style.height = h * GRID + "px";
+      }
+      this._emit();
+    });
+
+    const del = document.createElement("button");
+    del.className = "del";
+    del.title = "verwijderen";
+    del.textContent = "✕";
+    del.addEventListener("click", () => this._removePanel(p.id));
+
+    row.append(lbl, sel, wp, orient, del);
+    return row;
+  }
+
+  _canvasNode(id) {
+    return this.shadowRoot.querySelector(`.epanel[data-id="${id}"]`);
+  }
+
+  _refreshEntityOptions() {
+    const entities = this._entityList();
+    if (!entities.length) return;
+    this.shadowRoot.querySelectorAll(".prow").forEach((row) => {
+      const id = row.dataset.id;
+      const p = this._panel(id);
+      const sel = row.querySelector(".ent");
+      if (!sel || !p) return;
+      const current = p.entity || "";
+      sel.innerHTML =
+        `<option value="">— sensor —</option>` +
+        entities.map((e) => `<option value="${e}">${e}</option>`).join("");
+      sel.value = current;
+    });
+    this._entitiesFilled = true;
+  }
+
+  /* ---- add / remove ---- */
+  _addPanel() {
+    const p = {
+      id: uid(),
+      x: 0, y: 0,
+      orientation: "portrait",
+      entity: "",
+      label: String(this._config.panels.length + 1),
+      wp: this._config.reference || 400,
+    };
+    this._config.panels.push(p);
+    const canvas = this.shadowRoot.getElementById("canvas");
+    if (canvas) canvas.appendChild(this._makePanelNode(p));
+    const list = this.shadowRoot.getElementById("list");
+    if (list) {
+      const muted = list.querySelector(".muted");
+      if (muted) muted.remove();
+      list.appendChild(this._makeRow(p));
+      this._entitiesFilled = false;
+      this._refreshEntityOptions();
+    }
+    this._emit();
+  }
+
+  _removePanel(id) {
+    this._config.panels = this._config.panels.filter((p) => p.id !== id);
+    const node = this._canvasNode(id);
+    if (node) node.remove();
+    const row = this.shadowRoot.querySelector(`.prow[data-id="${id}"]`);
+    if (row) row.remove();
+    this._emit();
   }
 
   static styles(cols, rows) {
@@ -419,20 +544,22 @@ class SolarLayoutCardEditor extends HTMLElement {
           linear-gradient(var(--divider-color,#e0e0e0) 1px, transparent 1px),
           linear-gradient(90deg, var(--divider-color,#e0e0e0) 1px, transparent 1px);
         background-size:${GRID}px ${GRID}px;
-        border-radius:6px; touch-action:none;
+        border-radius:6px; touch-action:none; user-select:none;
       }
       .epanel {
         position:absolute; box-sizing:border-box;
         background:hsl(48,70%,60%); border:1px solid rgba(0,0,0,.35);
-        border-radius:4px; cursor:grab; touch-action:none;
+        border-radius:4px; cursor:grab; touch-action:none; user-select:none;
         display:flex; align-items:center; justify-content:center;
       }
-      .epanel.dragging { cursor:grabbing; filter:brightness(1.1); z-index:5; }
-      .epanel .tag { font-size:.7rem; color:rgba(0,0,0,.7); font-weight:600; }
+      .epanel.dragging { cursor:grabbing; filter:brightness(1.1); z-index:5;
+        box-shadow:0 2px 8px rgba(0,0,0,.3); }
+      .epanel .tag { font-size:.7rem; color:rgba(0,0,0,.7); font-weight:600; pointer-events:none; }
       .add { align-self:flex-start; cursor:pointer; }
       .list { display:flex; flex-direction:column; gap:6px; }
-      .prow { display:grid; grid-template-columns: 70px 1fr auto auto; gap:6px; align-items:center; }
+      .prow { display:grid; grid-template-columns: 60px 1fr 70px auto auto; gap:6px; align-items:center; }
       .prow .lbl { width:100%; }
+      .prow .wp { width:100%; text-align:right; }
       .prow button { cursor:pointer; }
       .del { color:var(--error-color,#c00); }
       .muted { color:var(--secondary-text-color); font-size:.85rem; }

@@ -1,7 +1,7 @@
 # Solar Layout Card
 
 [![hacs](https://img.shields.io/badge/HACS-Dashboard-41BDF5.svg)](https://hacs.xyz)
-![version](https://img.shields.io/badge/version-1.0.0-f4c40f.svg)
+![version](https://img.shields.io/badge/version-1.0.2-f4c40f.svg)
 
 Een Home Assistant Lovelace-card die een **legplan van je zonnepanelen** toont, met de
 **live PV-opbrengst** in elk paneel. Panelen zijn per stuk **portrait** of **landscape**
@@ -26,19 +26,21 @@ De resource wordt geserveerd via `/hacsfiles/solar-layout-card/solar-layout-card
 ```yaml
 type: custom:solar-layout-card
 title: Zonnepanelen dak
-reference: 400        # Wp of piek-W voor de kleurschaal
+reference: 400        # standaard-Wp voor nieuwe panelen
 panels:
   - id: a1
     x: 0
     y: 0
     orientation: portrait
-    entity: sensor.paneel_1_vermogen
+    entity: sensor.paneel_1_vermogen   # Watt
+    wp: 400
     label: "1"
   - id: a2
     x: 4
     y: 0
     orientation: landscape
-    entity: sensor.paneel_2_vermogen
+    entity: sensor.paneel_2_vermogen   # Watt
+    wp: 370
     label: "2"
 ```
 
@@ -46,14 +48,14 @@ panels:
 | Optie       | Type   | Standaard | Beschrijving |
 |-------------|--------|-----------|--------------|
 | `title`     | string | `""`      | Titel boven de card. |
-| `reference` | number | `400`     | Referentie (Wp/W) voor de kleurschaal. |
+| `reference` | number | `400`     | Standaard-Wp voor nieuw toegevoegde panelen. |
 | `panels`    | list   | `[]`      | Lijst met panelen. |
 
 **Per paneel:** `id`, `x`, `y` (rastercoördinaten), `orientation` (`portrait`/`landscape`),
-`entity` (sensor), `label`.
+`entity` (Watt-sensor), `wp` (piekvermogen van dit paneel, voor de kleurschaal), `label`.
 
 ## Ontwikkeling
-E�n los `dist/solar-layout-card.js`-bestand, geen build-stap nodig.
+E�n los `dist/solar-layout-card.js`-bestand, geen build-stap nodig.
 
 ## Licentie
 MIT — zie [LICENSE](LICENSE).
