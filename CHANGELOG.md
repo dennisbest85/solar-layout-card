@@ -4,6 +4,12 @@ Alle noemenswaardige wijzigingen aan deze card worden hier bijgehouden.
 Formaat volgt [Keep a Changelog](https://keepachangelog.com/) en
 [Semantic Versioning](https://semver.org/).
 
+## [1.1.0] - 2026-07-10
+### Toegevoegd
+- De editor-grid groeit nu automatisch mee met grote legplannen. Panelen en omvormers die verder weg staan vallen niet meer buiten het raster; tijdens het slepen groeit het canvas live mee zodat er altijd ruimte is.
+### Gewijzigd
+- De Sunsynk-afbeelding (en de andere omvormers) zijn strakker bijgesneden en met minder marge geplaatst, zodat ze het vlak beter vullen.
+
 ## [1.0.8] - 2026-07-10
 ### Opgelost
 - Na een eerste bewerking kon je niets meer aanpassen (omvormer toevoegen, verplaatsen, verbinden of merk wijzigen gaf "Cannot assign to read only property"). Oorzaak: de config die naar Home Assistant ging deelde objecten met de werkstatus van de editor, die Home Assistant vervolgens bevriest. De verstuurde config is nu een diepe kopie, zodat de editor bewerkbaar blijft.

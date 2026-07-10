@@ -1,7 +1,7 @@
 # Solar Layout Card
 
 ![hacs](https://img.shields.io/badge/HACS-Dashboard-41BDF5.svg)
-![version](https://img.shields.io/badge/version-1.0.8-f4c40f.svg)
+![version](https://img.shields.io/badge/version-1.1.0-f4c40f.svg)
 
 Een Home Assistant Lovelace-card die een legplan van je zonnepanelen toont, met de
 live PV-opbrengst in elk paneel. Panelen zijn per stuk portrait of landscape
