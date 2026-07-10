@@ -4,12 +4,21 @@ Alle noemenswaardige wijzigingen aan deze card worden hier bijgehouden.
 Formaat volgt [Keep a Changelog](https://keepachangelog.com/) en
 [Semantic Versioning](https://semver.org/).
 
+## [1.0.7] - 2026-07-10
+### Toegevoegd
+- Sunsynk toegevoegd als omvormermerk (met afbeelding, ingebed in het JS-bestand).
+### Gewijzigd
+- Verbindingslijnen liggen nu achter de panelen/omvormers in plaats van eroverheen.
+- De "Verbind"-knop is vervangen door een potlood-icoon met een ingekleurde (actieve) staat.
+### Opgelost
+- Typen in het Wp-veld van een paneel en in het omvormer-label werkte niet vloeiend (venster sprong / typen stopte bij elke letter). De editor herbouwt nu niet meer bij elke toetsaanslag.
+
 ## [1.0.6] - 2026-07-10
 ### Toegevoegd
-- Omvormers tonen nu een echte afbeelding (GoodWe, SolarEdge, Growatt, Solis) met transparante achtergrond, uniform bijgesneden op gelijk formaat.
-- Verbindingslijnen tussen panelen onderling en van paneel naar omvormer. Per verbinding te kiezen: rechte lijn of gebogen (boog). Verbinden gaat via een "Verbind"-knop: aanzetten en twee items aanklikken.
+- Omvormers tonen nu een echte afbeelding (GoodWe, SolarEdge, Growatt, Solis) met transparante achtergrond, uniform bijgesneden op gelijk formaat. Afbeeldingen zijn ingebed in het JS-bestand.
+- Verbindingslijnen tussen panelen onderling en van paneel naar omvormer. Per verbinding te kiezen: rechte lijn of gebogen (boog). Tekenen via een verbind-knop.
 - Zoom is nu per legplan instelbaar (elk tabblad onthoudt zijn eigen zoom).
-- Instelling om per alle omvormers de afbeelding, het label en/of de sensorwaarde te verbergen.
+- Instelling om voor alle omvormers de afbeelding, het label en/of de sensorwaarde te verbergen.
 ### Gewijzigd
 - Layout-tabbladen kunnen hernoemd worden (dubbelklik), standaardnamen blijven Layout1, Layout2, ...
 - Omvormerblok is iets rechthoekiger (portrait) voor een nettere uitstraling van de afbeeldingen.
