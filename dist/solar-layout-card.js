@@ -1,5 +1,5 @@
-/*! solar-layout-card v1.0.7 | MIT License */
-const VERSION = "1.0.7";
+/*! solar-layout-card v1.0.8 | MIT License */
+const VERSION = "1.0.8";
 
 /* ---------- constants ---------- */
 const GRID = 20;                 // px per grid cell in the editor
@@ -218,7 +218,19 @@ function serializeConfig(cfg) {
   } else {
     out.layouts = cfg.layouts.map(cleanLayout);
   }
-  return out;
+  // Return a DEEP COPY. Home Assistant deep-freezes the config it receives; if we
+  // handed back arrays/objects that are still referenced by the editor's working
+  // _config, those would become read-only and every later edit would throw
+  // ("Cannot assign to read only property"). Cloning severs that link.
+  return deepClone(out);
+}
+
+// Structured deep clone with a safe fallback for older environments.
+function deepClone(obj) {
+  try {
+    if (typeof structuredClone === "function") return structuredClone(obj);
+  } catch (e) { /* fall through */ }
+  return JSON.parse(JSON.stringify(obj));
 }
 
 

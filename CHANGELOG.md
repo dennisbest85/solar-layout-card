@@ -4,6 +4,11 @@ Alle noemenswaardige wijzigingen aan deze card worden hier bijgehouden.
 Formaat volgt [Keep a Changelog](https://keepachangelog.com/) en
 [Semantic Versioning](https://semver.org/).
 
+## [1.0.8] - 2026-07-10
+### Opgelost
+- Na een eerste bewerking kon je niets meer aanpassen (omvormer toevoegen, verplaatsen, verbinden of merk wijzigen gaf "Cannot assign to read only property"). Oorzaak: de config die naar Home Assistant ging deelde objecten met de werkstatus van de editor, die Home Assistant vervolgens bevriest. De verstuurde config is nu een diepe kopie, zodat de editor bewerkbaar blijft.
+- Na het tekenen van een verbinding bleef het tweede item geselecteerd; door bovenstaande fix wordt de selectie nu correct gewist zodat je door kunt tekenen.
+
 ## [1.0.7] - 2026-07-10
 ### Toegevoegd
 - Sunsynk toegevoegd als omvormermerk (met afbeelding, ingebed in het JS-bestand).
