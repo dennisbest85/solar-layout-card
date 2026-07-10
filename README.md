@@ -1,7 +1,7 @@
 # Solar Layout Card
 
 ![hacs](https://img.shields.io/badge/HACS-Dashboard-41BDF5.svg)
-![version](https://img.shields.io/badge/version-1.0.5-f4c40f.svg)
+![version](https://img.shields.io/badge/version-1.0.6-f4c40f.svg)
 
 Een Home Assistant Lovelace-card die een legplan van je zonnepanelen toont, met de
 live PV-opbrengst in elk paneel. Panelen zijn per stuk portrait of landscape
@@ -18,6 +18,9 @@ te plaatsen en de indeling maak je met een drag and drop editor.
 - Meerdere legplannen via tabbladen (standaard Layout1, Layout2, ...); bij een enkel plan blijven tabbladen verborgen.
 - Omvormers plaatsbaar in het legplan (GoodWe, SolarEdge, Growatt, Solis), met optionele sensor.
 - Rode waarschuwing op een paneel dat overdag 0 W meet (via sun.sun).
+- Omvormers met echte afbeelding (GoodWe, SolarEdge, Growatt, Solis).
+- Verbindingslijnen tussen panelen en naar de omvormer, recht of gebogen.
+- Zoom per legplan; verberg-opties voor omvormer-afbeelding/label/sensor.
 - Portrait/landscape per paneel.
 - Visuele editor met slepen en snap-to-grid.
 - Klik op een paneel opent de more-info dialoog van de sensor.
@@ -66,7 +69,11 @@ panels:
 | `font_scale`| number | `100`     | Tekstgrootte in procent (50 tot 200). |
 | `panels`    | list   | `[]`      | Panelen (enkel legplan). |
 | `inverters` | list   | `[]`      | Omvormers (enkel legplan). |
-| `layouts`   | list   | -         | Meerdere legplannen; elk met `name`, `panels`, `inverters`. |
+| `inv_hide_image` | bool | `false` | Verberg de omvormer-afbeelding (alle omvormers). |
+| `inv_hide_label` | bool | `false` | Verberg het omvormer-label. |
+| `inv_hide_sensor`| bool | `false` | Verberg de omvormer-sensorwaarde. |
+| `connections` | list | `[]`     | Lijnen tussen items; elk met `from`, `to`, `curved`. |
+| `layouts`   | list   | -         | Meerdere legplannen; elk met `name`, `panels`, `inverters`, `connections`, `zoom`. |
 
 Per paneel: `id`, `x`, `y` (rastercoordinaten), `orientation` (`portrait`/`landscape`),
 `entity` (Watt-sensor), `wp` (piekvermogen van dit paneel, voor de kleurschaal), `label`.
