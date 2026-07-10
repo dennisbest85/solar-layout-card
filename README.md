@@ -1,7 +1,7 @@
 # Solar Layout Card
 
 ![hacs](https://img.shields.io/badge/HACS-Dashboard-41BDF5.svg)
-![version](https://img.shields.io/badge/version-1.0.4-f4c40f.svg)
+![version](https://img.shields.io/badge/version-1.0.5-f4c40f.svg)
 
 Een Home Assistant Lovelace-card die een legplan van je zonnepanelen toont, met de
 live PV-opbrengst in elk paneel. Panelen zijn per stuk portrait of landscape
@@ -15,6 +15,9 @@ te plaatsen en de indeling maak je met een drag and drop editor.
 - Zoomknop om grote opstellingen compacter te maken (100% tot 40%).
 - Typed zoeken bij de sensorkeuze en een knop om een paneel te dupliceren (neemt sensor, Wp en orientatie mee).
 - Instelbare tekstgrootte, los van de zoom.
+- Meerdere legplannen via tabbladen (standaard Layout1, Layout2, ...); bij een enkel plan blijven tabbladen verborgen.
+- Omvormers plaatsbaar in het legplan (GoodWe, SolarEdge, Growatt, Solis), met optionele sensor.
+- Rode waarschuwing op een paneel dat overdag 0 W meet (via sun.sun).
 - Portrait/landscape per paneel.
 - Visuele editor met slepen en snap-to-grid.
 - Klik op een paneel opent de more-info dialoog van de sensor.
@@ -61,7 +64,9 @@ panels:
 | `color_max` | string | `#6fc3ff` | Kleur bij maximale opbrengst (bij Wp). |
 | `zoom`      | number | `100`     | Startzoom in procent (40 tot 100). |
 | `font_scale`| number | `100`     | Tekstgrootte in procent (50 tot 200). |
-| `panels`    | list   | `[]`      | Lijst met panelen. |
+| `panels`    | list   | `[]`      | Panelen (enkel legplan). |
+| `inverters` | list   | `[]`      | Omvormers (enkel legplan). |
+| `layouts`   | list   | -         | Meerdere legplannen; elk met `name`, `panels`, `inverters`. |
 
 Per paneel: `id`, `x`, `y` (rastercoordinaten), `orientation` (`portrait`/`landscape`),
 `entity` (Watt-sensor), `wp` (piekvermogen van dit paneel, voor de kleurschaal), `label`.

@@ -4,6 +4,14 @@ Alle noemenswaardige wijzigingen aan deze card worden hier bijgehouden.
 Formaat volgt [Keep a Changelog](https://keepachangelog.com/) en
 [Semantic Versioning](https://semver.org/).
 
+## [1.0.5] - 2026-07-10
+### Toegevoegd
+- Meerdere legplannen via tabbladen (standaard Layout1, Layout2, ...). Bij een enkel legplan blijven de tabbladen verborgen en verandert er niets. Legplan toevoegen, hernoemen (dubbelklik op tab) en verwijderen in de editor.
+- Omvormers plaatsbaar in het legplan met merkkeuze: GoodWe, SolarEdge, Growatt, Solis. Optioneel een sensor koppelen om het vermogen te tonen. (Eigen afbeeldingen kunnen later worden toegevoegd.)
+- Rode waarschuwing op een paneel dat overdag 0 W meet (op basis van sun.sun). 's Nachts of zonder geldige meting verschijnt de waarschuwing niet.
+### Opmerking
+- Bestaande configuraties met een enkel legplan blijven ongewijzigd werken; de config wordt pas naar het layouts-formaat omgezet zodra je een tweede legplan toevoegt.
+
 ## [1.0.4] - 2026-07-08
 ### Toegevoegd
 - Typed zoeken in de sensorkeuze: begin te typen om te filteren in plaats van te scrollen.
