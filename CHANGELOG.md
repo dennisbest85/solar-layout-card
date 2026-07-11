@@ -4,6 +4,12 @@ Alle noemenswaardige wijzigingen aan deze card worden hier bijgehouden.
 Formaat volgt [Keep a Changelog](https://keepachangelog.com/) en
 [Semantic Versioning](https://semver.org/).
 
+## [1.1.3] - 2026-07-11
+### Opgelost
+- Een legplan hernoemen werkte niet betrouwbaar. Het oude hernoemen gebruikte een browser-pop-up (`prompt`), die binnen de Home Assistant-editor vaak geblokkeerd of genegeerd wordt, waardoor er bij dubbelklikken niets gebeurde.
+### Gewijzigd
+- Naast het actieve tabblad staat nu een klein potlood-icoon. Klik erop om de naam direct in het tabblad te wijzigen (Enter of klik-weg om op te slaan, Escape om te annuleren). Dubbelklikken op een tabblad start het hernoemen ook.
+
 ## [1.1.2] - 2026-07-11
 ### Toegevoegd
 - De bewegende bolletjes zijn nu aan/uit te zetten via de nieuwe optie `flow_dots` (standaard aan). In de editor staat er een checkbox "Bewegende bolletjes" bij de verbindingsopties.

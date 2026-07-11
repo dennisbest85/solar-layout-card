@@ -1,7 +1,7 @@
 # Solar Layout Card
 
 ![hacs](https://img.shields.io/badge/HACS-Dashboard-41BDF5.svg)
-![version](https://img.shields.io/badge/version-1.1.2-f4c40f.svg)
+![version](https://img.shields.io/badge/version-1.1.3-f4c40f.svg)
 
 Een Home Assistant Lovelace-card die een legplan van je zonnepanelen toont, met de
 live PV-opbrengst in elk paneel. Panelen zijn per stuk portrait of landscape
@@ -19,7 +19,7 @@ te plaatsen en de indeling maak je met een drag and drop editor.
 - Zoomknop om grote opstellingen compacter te maken (100% tot 40%).
 - Typed zoeken bij de sensorkeuze en een knop om een paneel te dupliceren (neemt sensor, Wp en orientatie mee).
 - Instelbare tekstgrootte, los van de zoom.
-- Meerdere legplannen via tabbladen (standaard Layout1, Layout2, ...); bij een enkel plan blijven tabbladen verborgen.
+- Meerdere legplannen via tabbladen (standaard Layout1, Layout2, ...); hernoemen via het potlood-icoon naast het actieve tabblad. Bij een enkel plan blijven de tabbladen op de card zelf verborgen.
 - Omvormers plaatsbaar in het legplan (GoodWe, SolarEdge, Growatt, Solis, Sunsynk), met optionele sensor.
 - Rode waarschuwing op een paneel dat overdag 0 W meet (via sun.sun).
 - Slaap-icoon (Zzz) op een omvormer wanneer de zon onder is en de gekoppelde sensor 0 meet.

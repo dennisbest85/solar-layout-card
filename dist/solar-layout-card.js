@@ -1,5 +1,5 @@
-/*! solar-layout-card v1.1.2 | MIT License */
-const VERSION = "1.1.2";
+/*! solar-layout-card v1.1.3 | MIT License */
+const VERSION = "1.1.3";
 
 /* ---------- constants ---------- */
 const GRID = 20;                 // px per grid cell in the editor
@@ -999,6 +999,7 @@ class SolarLayoutCardEditor extends HTMLElement {
   }
 
   _refreshAll() {
+    this._renamingLayout = false;
     this._renderLayoutTabs();
     this._renderCanvas();
     this._renderList();
@@ -1019,23 +1020,63 @@ class SolarLayoutCardEditor extends HTMLElement {
     if (!wrap) return;
     wrap.innerHTML = "";
     this._config.layouts.forEach((l, i) => {
+      const isActive = i === this._activeLayout;
+
+      // Inline rename in progress on the active tab: show a text field instead
+      // of the button. This works inside the editor shadow DOM, unlike prompt().
+      if (isActive && this._renamingLayout) {
+        const input = document.createElement("input");
+        input.className = "ltab ltab-edit";
+        input.type = "text";
+        input.value = l.name;
+        const commit = (save) => {
+          if (this._renamingLayout !== true) return; // guard against double fire
+          this._renamingLayout = false;
+          if (save) {
+            const v = input.value.trim();
+            if (v) { l.name = v; this._emit(); }
+          }
+          this._renderLayoutTabs();
+        };
+        input.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") { e.preventDefault(); commit(true); }
+          else if (e.key === "Escape") { e.preventDefault(); commit(false); }
+        });
+        input.addEventListener("blur", () => commit(true));
+        wrap.appendChild(input);
+        // focus + select after it's in the DOM
+        requestAnimationFrame(() => { input.focus(); input.select(); });
+        return;
+      }
+
       const tab = document.createElement("button");
-      tab.className = "ltab" + (i === this._activeLayout ? " active" : "");
+      tab.className = "ltab" + (isActive ? " active" : "");
       tab.textContent = l.name;
       tab.addEventListener("click", () => {
         this._activeLayout = i;
         this._refreshAll();
       });
-      // double-click to rename
+      // double-click still works as a shortcut to start renaming
       tab.addEventListener("dblclick", () => {
-        const name = prompt("Naam van dit legplan:", l.name);
-        if (name && name.trim()) {
-          l.name = name.trim();
-          this._renderLayoutTabs();
-          this._emit();
-        }
+        this._activeLayout = i;
+        this._renamingLayout = true;
+        this._renderLayoutTabs();
       });
       wrap.appendChild(tab);
+
+      // pencil button next to the active tab to start renaming
+      if (isActive) {
+        const pen = document.createElement("button");
+        pen.className = "ltab rentab";
+        pen.textContent = "✎";           // ✎ lower-left pencil
+        pen.title = "Naam van dit legplan wijzigen";
+        pen.addEventListener("click", (e) => {
+          e.stopPropagation();
+          this._renamingLayout = true;
+          this._renderLayoutTabs();
+        });
+        wrap.appendChild(pen);
+      }
     });
     const add = document.createElement("button");
     add.className = "ltab addtab";
@@ -1716,6 +1757,12 @@ class SolarLayoutCardEditor extends HTMLElement {
       .ltab.active { background:var(--primary-color,#03a9f4); color:#fff; font-weight:600; }
       .ltab.addtab { font-weight:700; }
       .ltab.deltab { color:var(--error-color,#c00); margin-left:auto; }
+      .ltab.rentab { padding:4px 8px; line-height:1; }
+      .ltab.ltab-edit {
+        font:inherit; font-size:.8rem; padding:4px 10px; min-width:90px;
+        border:1px solid var(--primary-color,#03a9f4);
+        background:var(--card-background-color,#fff); color:var(--primary-text-color);
+      }
       .section-title { font-size:.8rem; color:var(--secondary-text-color); margin-top:4px; font-weight:600; }
       .einv {
         position:absolute; box-sizing:border-box;
