@@ -1,7 +1,7 @@
 # Solar Layout Card
 
 ![hacs](https://img.shields.io/badge/HACS-Dashboard-41BDF5.svg)
-![version](https://img.shields.io/badge/version-1.1.1-f4c40f.svg)
+![version](https://img.shields.io/badge/version-1.1.2-f4c40f.svg)
 
 Een Home Assistant Lovelace-card die een legplan van je zonnepanelen toont, met de
 live PV-opbrengst in elk paneel. Panelen zijn per stuk portrait of landscape
@@ -22,11 +22,12 @@ te plaatsen en de indeling maak je met een drag and drop editor.
 - Meerdere legplannen via tabbladen (standaard Layout1, Layout2, ...); bij een enkel plan blijven tabbladen verborgen.
 - Omvormers plaatsbaar in het legplan (GoodWe, SolarEdge, Growatt, Solis, Sunsynk), met optionele sensor.
 - Rode waarschuwing op een paneel dat overdag 0 W meet (via sun.sun).
+- Slaap-icoon (Zzz) op een omvormer wanneer de zon onder is en de gekoppelde sensor 0 meet.
 - Omvormers met echte afbeelding (GoodWe, SolarEdge, Growatt, Solis, Sunsynk).
 - Verbindingslijnen tussen panelen en naar de omvormer, recht of gebogen.
-- Stromende bolletjes over de verbindingslijnen, die af en toe langs de lijn lopen.
+- Stromende bolletjes over de verbindingslijnen (aan/uit te zetten in de config).
 - Kleur per verbindingslijn instelbaar (standaard amber).
-- Micro-omvormers plaatsbaar naast de gewone omvormers (Enphase, APSystems, Growatt, Hoymiles), kleiner weergegeven dan de string-omvormers en met echte afbeelding.
+- Micro-omvormers plaatsbaar naast de gewone omvormers (Enphase, APSystems, Growatt, Hoymiles), klein weergegeven (3x2 cellen) en met echte afbeelding.
 - Zoom per legplan; verberg-opties voor omvormer-afbeelding/label/sensor.
 - Portrait/landscape per paneel.
 - Visuele editor met slepen en snap-to-grid.
@@ -79,6 +80,7 @@ panels:
 | `inv_hide_image` | bool | `false` | Verberg de omvormer-afbeelding (alle omvormers). |
 | `inv_hide_label` | bool | `false` | Verberg het omvormer-label. |
 | `inv_hide_sensor`| bool | `false` | Verberg de omvormer-sensorwaarde. |
+| `flow_dots`  | bool | `true`  | Bewegende bolletjes over de verbindingslijnen aan/uit. |
 | `connections` | list | `[]`     | Lijnen tussen items; elk met `from`, `to`, `curved` en `color`. |
 | `layouts`   | list   | -         | Meerdere legplannen; elk met `name`, `panels`, `inverters`, `connections`, `zoom`. |
 
@@ -88,6 +90,10 @@ Per paneel: `id`, `x`, `y` (rastercoordinaten), `orientation` (`portrait`/`lands
 Per omvormer: `id`, `x`, `y`, `brand`, `entity` (optioneel), `label`. Zet `micro: true` voor
 een micro-omvormer; het merk is dan een van `enphase`, `apsystems`, `growatt`, `hoymiles`.
 Zonder `micro` is het een string-omvormer (`goodwe`, `solaredge`, `growatt`, `solis`, `sunsynk`).
+
+Als een omvormer een sensor heeft die 0 meet terwijl de zon onder is, verschijnt er een
+klein slaap-icoon (Zzz) op de omvormer. Dit is het spiegelbeeld van de rode 0 W-waarschuwing
+die panelen overdag krijgen.
 
 Per verbinding: `from`, `to` (paneel- of omvormer-`id`), `curved` (recht of gebogen) en
 `color` (lijnkleur, standaard `#ffd54a`).

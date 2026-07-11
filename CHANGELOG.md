@@ -4,6 +4,15 @@ Alle noemenswaardige wijzigingen aan deze card worden hier bijgehouden.
 Formaat volgt [Keep a Changelog](https://keepachangelog.com/) en
 [Semantic Versioning](https://semver.org/).
 
+## [1.1.2] - 2026-07-11
+### Toegevoegd
+- De bewegende bolletjes zijn nu aan/uit te zetten via de nieuwe optie `flow_dots` (standaard aan). In de editor staat er een checkbox "Bewegende bolletjes" bij de verbindingsopties.
+- Slaap-icoon (Zzz) op een omvormer wanneer de zon onder is en de gekoppelde sensor 0 meet. Werkt voor zowel string-omvormers als micro-omvormers. Dit is het spiegelbeeld van de rode 0 W-waarschuwing die panelen overdag krijgen.
+### Gewijzigd
+- Micro-omvormers worden nog wat kleiner weergegeven: 3 cellen breed en 2 hoog (was 4x3), zodat het vak de verhouding van de afbeelding volgt en compacter oogt.
+### Opmerkingen
+- Bestaande configuraties blijven werken: `flow_dots` staat standaard aan en wordt alleen weggeschreven als je het uitzet.
+
 ## [1.1.1] - 2026-07-11
 ### Toegevoegd
 - Micro-omvormers zijn nu plaatsbaar naast de gewone omvormers, via een aparte knop "+ Micro-omvormer" in de editor. Merken: Enphase, APSystems, Growatt en Hoymiles, elk met een echte, ingebedde afbeelding. Micro-omvormers worden kleiner weergegeven dan de string-omvormers zodat ze als een ander type herkenbaar zijn.
