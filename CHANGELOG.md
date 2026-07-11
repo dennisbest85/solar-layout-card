@@ -4,6 +4,12 @@ Alle noemenswaardige wijzigingen aan deze card worden hier bijgehouden.
 Formaat volgt [Keep a Changelog](https://keepachangelog.com/) en
 [Semantic Versioning](https://semver.org/).
 
+## [1.1.4] - 2026-07-11
+### Toegevoegd
+- Meertaligheid. De teksten in de card en de editor volgen nu de taal van Home Assistant (`hass.language`): Nederlands, Duits en Engels. Talen die niet ondersteund worden vallen automatisch terug op Engels. Dit geldt ook voor losse woorden en tooltips zoals "Slaapt" en "Overdag maar 0 W".
+### Gewijzigd
+- De checkbox "Bewegende bolletjes" is verplaatst van de balk bij het canvas naar de weergave-opties bovenaan de editor, zodat hij meteen zichtbaar is (voorheen makkelijk over het hoofd te zien).
+
 ## [1.1.3] - 2026-07-11
 ### Opgelost
 - Een legplan hernoemen werkte niet betrouwbaar. Het oude hernoemen gebruikte een browser-pop-up (`prompt`), die binnen de Home Assistant-editor vaak geblokkeerd of genegeerd wordt, waardoor er bij dubbelklikken niets gebeurde.

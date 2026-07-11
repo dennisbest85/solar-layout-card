@@ -1,7 +1,7 @@
 # Solar Layout Card
 
 ![hacs](https://img.shields.io/badge/HACS-Dashboard-41BDF5.svg)
-![version](https://img.shields.io/badge/version-1.1.3-f4c40f.svg)
+![version](https://img.shields.io/badge/version-1.1.4-f4c40f.svg)
 
 Een Home Assistant Lovelace-card die een legplan van je zonnepanelen toont, met de
 live PV-opbrengst in elk paneel. Panelen zijn per stuk portrait of landscape
@@ -25,7 +25,8 @@ te plaatsen en de indeling maak je met een drag and drop editor.
 - Slaap-icoon (Zzz) op een omvormer wanneer de zon onder is en de gekoppelde sensor 0 meet.
 - Omvormers met echte afbeelding (GoodWe, SolarEdge, Growatt, Solis, Sunsynk).
 - Verbindingslijnen tussen panelen en naar de omvormer, recht of gebogen.
-- Stromende bolletjes over de verbindingslijnen (aan/uit te zetten in de config).
+- Stromende bolletjes over de verbindingslijnen (aan/uit te zetten via de checkbox "Bewegende bolletjes" bij de weergave-opties bovenaan de editor, of via `flow_dots` in de config).
+- Meertalig: de teksten volgen de taal van Home Assistant (`hass.language`). Ondersteund zijn Nederlands, Duits en Engels; andere talen krijgen automatisch Engels.
 - Kleur per verbindingslijn instelbaar (standaard amber).
 - Micro-omvormers plaatsbaar naast de gewone omvormers (Enphase, APSystems, Growatt, Hoymiles), klein weergegeven (3x2 cellen) en met echte afbeelding.
 - Zoom per legplan; verberg-opties voor omvormer-afbeelding/label/sensor.

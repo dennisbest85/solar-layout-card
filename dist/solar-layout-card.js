@@ -1,5 +1,183 @@
-/*! solar-layout-card v1.1.3 | MIT License */
-const VERSION = "1.1.3";
+/*! solar-layout-card v1.1.4 | MIT License */
+const VERSION = "1.1.4";
+
+/* ---------- i18n ----------
+ * Follows Home Assistant's UI language (hass.language). Supported: nl, de, en.
+ * Anything else falls back to English. Only the language's base code is used
+ * (e.g. "en-GB" -> "en"). */
+const TRANSLATIONS = {
+  en: {
+    // card
+    title_default: "Solar panels",
+    empty_no_panels: "No panels. Open the editor.",
+    warn_zero_day: "Only 0 W during the day",
+    sleep_badge: "Zzz",
+    sleep_title: "Asleep (sun down, no output)",
+    zoom: "Zoom",
+    // editor - fields
+    f_title: "Title",
+    f_reference: "Default Wp for new panels (colour scale is per panel)",
+    f_color_off: "Colour off / no sun",
+    f_color_max: "Colour max output",
+    f_zoom: "Zoom of this layout (%)",
+    f_font: "Text size (%)",
+    inv_display: "Inverter display (applies to all inverters)",
+    hide_image: "Hide image",
+    hide_label: "Hide label",
+    hide_sensor: "Hide sensor",
+    // editor - lines / connections
+    curved_line: "Curved line",
+    flow_dots: "Moving dots",
+    draw_conn: "Draw connections",
+    canvas_hint: "Drag the panels and inverters. They snap to the grid.",
+    conn_pick_two: "Click two items to connect them.",
+    conn_pick_second: "Pick the second item.",
+    conn_made: "Connection made. Click two items to make another.",
+    // editor - sections & buttons
+    sec_inverters: "Inverters",
+    sec_connections: "Connections",
+    add_panel: "+ Panel",
+    add_inverter: "+ Inverter",
+    add_micro: "+ Micro-inverter",
+    no_panels: "No panels yet.",
+    no_inverters: "No inverters yet.",
+    no_connections: 'No connections yet. Turn on "Connect" and click two items.',
+    new_layout: "New layout",
+    rename_layout: "Rename this layout",
+    remove_layout: "Remove layout",
+    remove_layout_cur: "Remove current layout",
+    layout: "Layout",
+    // rows
+    wp_title: "Peak power of this panel in Wp",
+    dup_panel: "Duplicate panel",
+    remove: "remove",
+    line_color: "Line colour",
+    kind_micro: "micro",
+    kind_inv: "inv.",
+    straight: "straight",
+    curved: "curved",
+    toggle_shape: "Toggle straight/curved",
+    // meta
+    card_desc: "Solar panel layout with live PV output and a drag & drop editor.",
+    remove_layout_confirm: "Remove layout \"{name}\"?",
+    kind_micro_title: "Micro-inverter",
+    kind_inv_title: "Inverter",
+    panel_label: "Panel",
+  },
+  nl: {
+    title_default: "Zonnepanelen",
+    empty_no_panels: "Geen panelen. Open de editor.",
+    warn_zero_day: "Overdag maar 0 W",
+    sleep_badge: "Zzz",
+    sleep_title: "Slaapt (zon onder, geen opbrengst)",
+    zoom: "Zoom",
+    f_title: "Titel",
+    f_reference: "Standaard Wp voor nieuwe panelen (kleurschaal is per paneel)",
+    f_color_off: "Kleur uit / geen zon",
+    f_color_max: "Kleur max opbrengst",
+    f_zoom: "Zoom van dit legplan (%)",
+    f_font: "Tekstgrootte (%)",
+    inv_display: "Omvormer weergave (geldt voor alle omvormers)",
+    hide_image: "Afbeelding verbergen",
+    hide_label: "Label verbergen",
+    hide_sensor: "Sensor verbergen",
+    curved_line: "Gebogen lijn",
+    flow_dots: "Bewegende bolletjes",
+    draw_conn: "Verbindingen tekenen",
+    canvas_hint: "Sleep de panelen en omvormers. Ze snappen op het raster.",
+    conn_pick_two: "Klik twee items om te verbinden.",
+    conn_pick_second: "Kies het tweede item.",
+    conn_made: "Verbinding gemaakt. Klik twee items om nog een te maken.",
+    sec_inverters: "Omvormers",
+    sec_connections: "Verbindingen",
+    add_panel: "+ Paneel",
+    add_inverter: "+ Omvormer",
+    add_micro: "+ Micro-omvormer",
+    no_panels: "Nog geen panelen.",
+    no_inverters: "Nog geen omvormers.",
+    no_connections: 'Nog geen verbindingen. Zet "Verbind" aan en klik twee items.',
+    new_layout: "Nieuw legplan",
+    rename_layout: "Naam van dit legplan wijzigen",
+    remove_layout: "verwijder legplan",
+    remove_layout_cur: "Verwijder huidig legplan",
+    layout: "Legplan",
+    wp_title: "Piekvermogen van dit paneel in Wp",
+    dup_panel: "Dupliceer paneel",
+    remove: "verwijderen",
+    line_color: "Lijnkleur",
+    kind_micro: "micro",
+    kind_inv: "omv.",
+    straight: "recht",
+    curved: "gebogen",
+    toggle_shape: "Wissel recht/gebogen",
+    card_desc: "Legplan van zonnepanelen met live PV-opbrengst en drag & drop editor.",
+    remove_layout_confirm: "Legplan \"{name}\" verwijderen?",
+    kind_micro_title: "Micro-omvormer",
+    kind_inv_title: "Omvormer",
+    panel_label: "Paneel",
+  },
+  de: {
+    title_default: "Solarmodule",
+    empty_no_panels: "Keine Module. Öffne den Editor.",
+    warn_zero_day: "Tagsüber nur 0 W",
+    sleep_badge: "Zzz",
+    sleep_title: "Schläft (Sonne unter, kein Ertrag)",
+    zoom: "Zoom",
+    f_title: "Titel",
+    f_reference: "Standard-Wp für neue Module (Farbskala ist pro Modul)",
+    f_color_off: "Farbe aus / keine Sonne",
+    f_color_max: "Farbe max. Ertrag",
+    f_zoom: "Zoom dieses Layouts (%)",
+    f_font: "Textgröße (%)",
+    inv_display: "Wechselrichter-Anzeige (gilt für alle)",
+    hide_image: "Bild ausblenden",
+    hide_label: "Bezeichnung ausblenden",
+    hide_sensor: "Sensor ausblenden",
+    curved_line: "Gebogene Linie",
+    flow_dots: "Bewegte Punkte",
+    draw_conn: "Verbindungen zeichnen",
+    canvas_hint: "Ziehe die Module und Wechselrichter. Sie rasten am Raster ein.",
+    conn_pick_two: "Klicke zwei Elemente zum Verbinden.",
+    conn_pick_second: "Wähle das zweite Element.",
+    conn_made: "Verbindung erstellt. Klicke zwei Elemente für eine weitere.",
+    sec_inverters: "Wechselrichter",
+    sec_connections: "Verbindungen",
+    add_panel: "+ Modul",
+    add_inverter: "+ Wechselrichter",
+    add_micro: "+ Mikro-Wechselrichter",
+    no_panels: "Noch keine Module.",
+    no_inverters: "Noch keine Wechselrichter.",
+    no_connections: 'Noch keine Verbindungen. Schalte "Verbinden" ein und klicke zwei Elemente.',
+    new_layout: "Neues Layout",
+    rename_layout: "Dieses Layout umbenennen",
+    remove_layout: "Layout entfernen",
+    remove_layout_cur: "Aktuelles Layout entfernen",
+    layout: "Layout",
+    wp_title: "Spitzenleistung dieses Moduls in Wp",
+    dup_panel: "Modul duplizieren",
+    remove: "entfernen",
+    line_color: "Linienfarbe",
+    kind_micro: "Mikro",
+    kind_inv: "WR",
+    straight: "gerade",
+    curved: "gebogen",
+    toggle_shape: "Gerade/gebogen umschalten",
+    card_desc: "Solarmodul-Layout mit Live-PV-Ertrag und Drag-&-Drop-Editor.",
+    remove_layout_confirm: "Layout \"{name}\" entfernen?",
+    kind_micro_title: "Mikro-Wechselrichter",
+    kind_inv_title: "Wechselrichter",
+    panel_label: "Modul",
+  },
+};
+function langOf(hass) {
+  const raw = (hass && hass.language) || "en";
+  const base = String(raw).toLowerCase().split("-")[0];
+  return TRANSLATIONS[base] ? base : "en";
+}
+function t(hass, key) {
+  const l = langOf(hass);
+  return (TRANSLATIONS[l] && TRANSLATIONS[l][key]) || TRANSLATIONS.en[key] || key;
+}
 
 /* ---------- constants ---------- */
 const GRID = 20;                 // px per grid cell in the editor
@@ -394,7 +572,7 @@ class SolarLayoutCard extends HTMLElement {
               <span class="unit">${unit}</span>
             </div>
             ${p.label ? `<div class="plabel">${p.label}</div>` : ""}
-            ${warn ? `<div class="warn" title="Overdag maar 0 W">!</div>` : ""}
+            ${warn ? `<div class="warn" title="${t(hass, "warn_zero_day")}">!</div>` : ""}
           </div>`;
       })
       .join("");
@@ -418,7 +596,7 @@ class SolarLayoutCard extends HTMLElement {
         // is down AND a linked sensor genuinely reads 0 (so it "sleeps" at night).
         const sleep = !daytime && hasState && Number.isFinite(num) && num === 0;
         const sleepHtml = sleep
-          ? `<div class="inv-sleep" title="Slaapt (zon onder, geen opbrengst)">Zzz</div>`
+          ? `<div class="inv-sleep" title="${t(hass, "sleep_title")}">${t(hass, "sleep_badge")}</div>`
           : "";
         return `
           <div class="inverter${v.micro ? " micro" : ""}"
@@ -503,7 +681,7 @@ class SolarLayoutCard extends HTMLElement {
       <ha-card>
         <div class="topbar">
           ${this._config.title ? `<div class="header">${this._config.title}</div>` : `<span></span>`}
-          <div class="zoombar" title="Zoom">
+          <div class="zoombar" title="${t(hass, "zoom")}">
             <button class="zoom-out" aria-label="Verklein">-</button>
             <span class="zoom-val">${zoom}%</span>
             <button class="zoom-in" aria-label="Vergroot">+</button>
@@ -513,7 +691,7 @@ class SolarLayoutCard extends HTMLElement {
         <div class="gridwrap">
           <div class="grid">
             ${connSvg}
-            ${(panelsHtml + invertersHtml) || `<div class="empty">Geen panelen. Open de editor.</div>`}
+            ${(panelsHtml + invertersHtml) || `<div class="empty">${t(hass, "empty_no_panels")}</div>`}
           </div>
         </div>
       </ha-card>
@@ -756,7 +934,16 @@ class SolarLayoutCardEditor extends HTMLElement {
   }
 
   set hass(hass) {
+    const prevLang = this._lang;
     this._hass = hass;
+    this._lang = langOf(hass);
+    // The editor DOM is built once (often before hass is set, so labels start
+    // in the English fallback). When the language first becomes known or changes,
+    // rebuild so all labels/tooltips localize. Skip mid-edit to avoid input jumps.
+    if (this._built && this._lang !== prevLang && !this._renamingLayout && !this._internalChange) {
+      this._built = false;
+      this._build();
+    }
     if (this._built && !this._entitiesFilled) this._refreshEntityOptions();
   }
 
@@ -849,69 +1036,70 @@ class SolarLayoutCardEditor extends HTMLElement {
     this._gridCols = cols;
     this._gridRows = rows;
 
+    const _t = (k) => t(this._hass, k);
     this.shadowRoot.innerHTML = `
       <style>${SolarLayoutCardEditor.styles(cols, rows)}</style>
       <div class="wrap">
         <div class="field">
-          <label>Titel</label>
+          <label>${_t("f_title")}</label>
           <input id="title" type="text" />
         </div>
         <div class="field">
-          <label>Standaard Wp voor nieuwe panelen (kleurschaal is per paneel)</label>
+          <label>${_t("f_reference")}</label>
           <input id="reference" type="number" min="1" />
         </div>
         <div class="row2">
           <div class="field">
-            <label>Kleur uit / geen zon</label>
+            <label>${_t("f_color_off")}</label>
             <input id="color_off" type="color" />
           </div>
           <div class="field">
-            <label>Kleur max opbrengst</label>
+            <label>${_t("f_color_max")}</label>
             <input id="color_max" type="color" />
           </div>
         </div>
         <div class="row2">
           <div class="field">
-            <label>Zoom van dit legplan (%)</label>
+            <label>${_t("f_zoom")}</label>
             <input id="zoom" type="number" min="40" max="100" step="10" />
           </div>
           <div class="field">
-            <label>Tekstgrootte (%)</label>
+            <label>${_t("f_font")}</label>
             <input id="font_scale" type="number" min="50" max="200" step="10" />
           </div>
         </div>
 
         <div class="field">
-          <label>Omvormer weergave (geldt voor alle omvormers)</label>
+          <label>${_t("inv_display")}</label>
           <div class="checks">
-            <label class="chk"><input id="hide_image" type="checkbox" /> Afbeelding verbergen</label>
-            <label class="chk"><input id="hide_label" type="checkbox" /> Label verbergen</label>
-            <label class="chk"><input id="hide_sensor" type="checkbox" /> Sensor verbergen</label>
+            <label class="chk"><input id="hide_image" type="checkbox" /> ${_t("hide_image")}</label>
+            <label class="chk"><input id="hide_label" type="checkbox" /> ${_t("hide_label")}</label>
+            <label class="chk"><input id="hide_sensor" type="checkbox" /> ${_t("hide_sensor")}</label>
+            <label class="chk"><input id="flow_dots" type="checkbox" /> ${_t("flow_dots")}</label>
           </div>
         </div>
 
         <div class="canvaswrap">
           <div id="layouttabs" class="ltabs"></div>
           <div class="connbar">
-            <button id="connmode" class="add penbtn" title="Verbindingen tekenen">✏️</button>
-            <label class="chk"><input id="curved" type="checkbox" /> Gebogen lijn</label>
-            <label class="chk"><input id="flow_dots" type="checkbox" /> Bewegende bolletjes</label>
+            <button id="connmode" class="add penbtn" title="${_t("draw_conn")}">✏️</button>
+            <label class="chk"><input id="curved" type="checkbox" /> ${_t("curved_line")}</label>
             <span id="connhint" class="hint"></span>
           </div>
-          <div class="hint">Sleep de panelen en omvormers. Ze snappen op het raster.</div>
+          <div class="hint">${_t("canvas_hint")}</div>
           <div class="canvas" id="canvas"></div>
         </div>
 
         <div class="addbar">
-          <button id="add" class="add">+ Paneel</button>
-          <button id="addinv" class="add">+ Omvormer</button>
-          <button id="addmicro" class="add">+ Micro-omvormer</button>
+          <button id="add" class="add">${_t("add_panel")}</button>
+          <button id="addinv" class="add">${_t("add_inverter")}</button>
+          <button id="addmicro" class="add">${_t("add_micro")}</button>
         </div>
 
         <div class="list" id="list"></div>
-        <div class="section-title">Omvormers</div>
+        <div class="section-title">${_t("sec_inverters")}</div>
         <div class="list" id="invlist"></div>
-        <div class="section-title">Verbindingen</div>
+        <div class="section-title">${_t("sec_connections")}</div>
         <div class="list" id="connlist"></div>
         <div class="ver">solar-layout-card v${VERSION}</div>
       </div>
@@ -994,7 +1182,7 @@ class SolarLayoutCardEditor extends HTMLElement {
     const btn = this.shadowRoot.getElementById("connmode");
     const hint = this.shadowRoot.getElementById("connhint");
     if (btn) btn.classList.toggle("active", this._connMode);
-    if (hint) hint.textContent = this._connMode ? "Klik twee items om te verbinden." : "";
+    if (hint) hint.textContent = this._connMode ? t(this._hass, "conn_pick_two") : "";
     this.shadowRoot.getElementById("canvas").classList.toggle("connecting", this._connMode);
   }
 
@@ -1069,7 +1257,7 @@ class SolarLayoutCardEditor extends HTMLElement {
         const pen = document.createElement("button");
         pen.className = "ltab rentab";
         pen.textContent = "✎";           // ✎ lower-left pencil
-        pen.title = "Naam van dit legplan wijzigen";
+        pen.title = t(this._hass, "rename_layout");
         pen.addEventListener("click", (e) => {
           e.stopPropagation();
           this._renamingLayout = true;
@@ -1081,15 +1269,15 @@ class SolarLayoutCardEditor extends HTMLElement {
     const add = document.createElement("button");
     add.className = "ltab addtab";
     add.textContent = "+";
-    add.title = "Nieuw legplan";
+    add.title = t(this._hass, "new_layout");
     add.addEventListener("click", () => this._addLayout());
     wrap.appendChild(add);
 
     if (this._config.layouts.length > 1) {
       const del = document.createElement("button");
       del.className = "ltab deltab";
-      del.textContent = "verwijder legplan";
-      del.title = "Verwijder huidig legplan";
+      del.textContent = t(this._hass, "remove_layout");
+      del.title = t(this._hass, "remove_layout_cur");
       del.addEventListener("click", () => this._removeLayout());
       wrap.appendChild(del);
     }
@@ -1113,7 +1301,7 @@ class SolarLayoutCardEditor extends HTMLElement {
   _removeLayout() {
     if (this._config.layouts.length <= 1) return;
     const name = this._layout().name;
-    if (!confirm(`Legplan "${name}" verwijderen?`)) return;
+    if (!confirm(t(this._hass, "remove_layout_confirm").replace("{name}", name))) return;
     this._config.layouts.splice(this._activeLayout, 1);
     this._activeLayout = clamp(this._activeLayout, 0, this._config.layouts.length - 1);
     this._refreshAll();
@@ -1224,7 +1412,7 @@ class SolarLayoutCardEditor extends HTMLElement {
         this._connFrom = id;
         el.classList.add("connsel");
         const hint = this.shadowRoot.getElementById("connhint");
-        if (hint) hint.textContent = "Kies het tweede item.";
+        if (hint) hint.textContent = t(this._hass, "conn_pick_second");
         return;
       }
       if (this._connFrom === id) {
@@ -1237,7 +1425,7 @@ class SolarLayoutCardEditor extends HTMLElement {
       this._connFrom = null;
       this.shadowRoot.querySelectorAll(".connsel").forEach((n) => n.classList.remove("connsel"));
       const hint = this.shadowRoot.getElementById("connhint");
-      if (hint) hint.textContent = "Verbinding gemaakt. Klik twee items om nog een te maken.";
+      if (hint) hint.textContent = t(this._hass, "conn_made");
     });
   }
 
@@ -1323,7 +1511,7 @@ class SolarLayoutCardEditor extends HTMLElement {
     if (!list) return;
     list.innerHTML = "";
     if (!this._panels().length) {
-      list.innerHTML = `<div class="muted">Nog geen panelen.</div>`;
+      list.innerHTML = `<div class="muted">${t(this._hass, "no_panels")}</div>`;
       return;
     }
     this._panels().forEach((p) => list.appendChild(this._makeRow(p)));
@@ -1377,7 +1565,7 @@ class SolarLayoutCardEditor extends HTMLElement {
     wp.type = "number";
     wp.min = "1";
     wp.placeholder = "Wp";
-    wp.title = "Piekvermogen van dit paneel in Wp";
+    wp.title = t(this._hass, "wp_title");
     wp.value = p.wp || "";
     wp.addEventListener("input", (e) => {
       const v = Number(e.target.value);
@@ -1404,13 +1592,13 @@ class SolarLayoutCardEditor extends HTMLElement {
 
     const dup = document.createElement("button");
     dup.className = "dup";
-    dup.title = "Dupliceer paneel";
+    dup.title = t(this._hass, "dup_panel");
     dup.textContent = "⧉";
     dup.addEventListener("click", () => this._duplicatePanel(p.id));
 
     const del = document.createElement("button");
     del.className = "del";
-    del.title = "verwijderen";
+    del.title = t(this._hass, "remove");
     del.textContent = "✕";
     del.addEventListener("click", () => this._removePanel(p.id));
 
@@ -1504,7 +1692,7 @@ class SolarLayoutCardEditor extends HTMLElement {
     if (!list) return;
     list.innerHTML = "";
     if (!this._inverters().length) {
-      list.innerHTML = `<div class="muted">Nog geen omvormers.</div>`;
+      list.innerHTML = `<div class="muted">${t(this._hass, "no_inverters")}</div>`;
       return;
     }
     this._inverters().forEach((v) => list.appendChild(this._makeInverterRow(v)));
@@ -1519,8 +1707,8 @@ class SolarLayoutCardEditor extends HTMLElement {
     const brandMap = v.micro ? MICRO_INVERTERS : INVERTERS;
     const kind = document.createElement("span");
     kind.className = "ikind";
-    kind.textContent = v.micro ? "micro" : "omv.";
-    kind.title = v.micro ? "Micro-omvormer" : "Omvormer";
+    kind.textContent = v.micro ? t(this._hass, "kind_micro") : t(this._hass, "kind_inv");
+    kind.title = v.micro ? t(this._hass, "kind_micro_title") : t(this._hass, "kind_inv_title");
 
     const brand = document.createElement("select");
     brand.className = "brand";
@@ -1571,7 +1759,7 @@ class SolarLayoutCardEditor extends HTMLElement {
 
     const del = document.createElement("button");
     del.className = "del";
-    del.title = "verwijderen";
+    del.title = t(this._hass, "remove");
     del.textContent = "✕";
     del.addEventListener("click", () => this._removeInverter(v.id));
 
@@ -1619,7 +1807,7 @@ class SolarLayoutCardEditor extends HTMLElement {
   /* ---- connections ---- */
   _itemLabel(id) {
     const p = this._panel(id);
-    if (p) return `Paneel ${p.label || p.id.slice(0, 4)}`;
+    if (p) return `${t(this._hass, "panel_label")} ${p.label || p.id.slice(0, 4)}`;
     const v = this._inverter(id);
     if (v) return `${invMeta(v).name}${v.label ? " " + v.label : ""}`;
     return "?";
@@ -1631,7 +1819,7 @@ class SolarLayoutCardEditor extends HTMLElement {
     list.innerHTML = "";
     const conns = this._layout().connections || [];
     if (!conns.length) {
-      list.innerHTML = `<div class="muted">Nog geen verbindingen. Zet "Verbind" aan en klik twee items.</div>`;
+      list.innerHTML = `<div class="muted">${t(this._hass, "no_connections")}</div>`;
       return;
     }
     conns.forEach((c) => {
@@ -1646,7 +1834,7 @@ class SolarLayoutCardEditor extends HTMLElement {
       const color = document.createElement("input");
       color.className = "ccolor";
       color.type = "color";
-      color.title = "Lijnkleur";
+      color.title = t(this._hass, "line_color");
       color.value = c.color || DEFAULT_LINE_COLOR;
       color.addEventListener("input", (e) => {
         c.color = e.target.value;
@@ -1656,18 +1844,18 @@ class SolarLayoutCardEditor extends HTMLElement {
 
       const curve = document.createElement("button");
       curve.className = "curve";
-      curve.textContent = c.curved ? "gebogen" : "recht";
-      curve.title = "Wissel recht/gebogen";
+      curve.textContent = c.curved ? t(this._hass, "curved") : t(this._hass, "straight");
+      curve.title = t(this._hass, "toggle_shape");
       curve.addEventListener("click", () => {
         c.curved = !c.curved;
-        curve.textContent = c.curved ? "gebogen" : "recht";
+        curve.textContent = c.curved ? t(this._hass, "curved") : t(this._hass, "straight");
         this._redrawConnections();
         this._emit();
       });
 
       const del = document.createElement("button");
       del.className = "del";
-      del.title = "verwijderen";
+      del.title = t(this._hass, "remove");
       del.textContent = "✕";
       del.addEventListener("click", () => this._removeConnection(c.id));
 
