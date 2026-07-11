@@ -4,6 +4,17 @@ Alle noemenswaardige wijzigingen aan deze card worden hier bijgehouden.
 Formaat volgt [Keep a Changelog](https://keepachangelog.com/) en
 [Semantic Versioning](https://semver.org/).
 
+## [1.1.1] - 2026-07-11
+### Toegevoegd
+- Micro-omvormers zijn nu plaatsbaar naast de gewone omvormers, via een aparte knop "+ Micro-omvormer" in de editor. Merken: Enphase, APSystems, Growatt en Hoymiles, elk met een echte, ingebedde afbeelding. Micro-omvormers worden kleiner weergegeven dan de string-omvormers zodat ze als een ander type herkenbaar zijn.
+- Stromende bolletjes over de verbindingslijnen: er loopt af en toe een klein bolletje langs elke lijn en het rust daarna even, zodat het rustig oogt in plaats van een continue stroom.
+- Kleur per verbindingslijn instelbaar. Elke verbinding in de lijst heeft een kleurkiezer; de kleur wordt gebruikt in zowel de editor-preview als de card en opgeslagen in de config (nieuw veld `color`, standaard amber `#ffd54a`).
+### Gewijzigd
+- Verbindingslijnen worden nu altijd als pad getekend (recht of gebogen), zodat de bolletjes de lijn kunnen volgen.
+- README uitgebreid met een voorbeeldafbeelding en een overzicht van de micro-omvormers.
+### Opmerkingen
+- Bestaande configuraties blijven werken: omvormers zonder `micro` blijven string-omvormers en verbindingen zonder `color` krijgen automatisch de standaardkleur.
+
 ## [1.1.0] - 2026-07-10
 ### Toegevoegd
 - De editor-grid groeit nu automatisch mee met grote legplannen. Panelen en omvormers die verder weg staan vallen niet meer buiten het raster; tijdens het slepen groeit het canvas live mee zodat er altijd ruimte is.

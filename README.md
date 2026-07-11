@@ -1,11 +1,15 @@
 # Solar Layout Card
 
 ![hacs](https://img.shields.io/badge/HACS-Dashboard-41BDF5.svg)
-![version](https://img.shields.io/badge/version-1.1.0-f4c40f.svg)
+![version](https://img.shields.io/badge/version-1.1.1-f4c40f.svg)
 
 Een Home Assistant Lovelace-card die een legplan van je zonnepanelen toont, met de
 live PV-opbrengst in elk paneel. Panelen zijn per stuk portrait of landscape
 te plaatsen en de indeling maak je met een drag and drop editor.
+
+![Voorbeeld van de Solar Layout Card](images/preview.png)
+
+![Micro-omvormers](images/microinverters.png)
 
 ## Functies
 - Legplan op een raster, zoals de panelen op je dak liggen.
@@ -20,6 +24,9 @@ te plaatsen en de indeling maak je met een drag and drop editor.
 - Rode waarschuwing op een paneel dat overdag 0 W meet (via sun.sun).
 - Omvormers met echte afbeelding (GoodWe, SolarEdge, Growatt, Solis, Sunsynk).
 - Verbindingslijnen tussen panelen en naar de omvormer, recht of gebogen.
+- Stromende bolletjes over de verbindingslijnen, die af en toe langs de lijn lopen.
+- Kleur per verbindingslijn instelbaar (standaard amber).
+- Micro-omvormers plaatsbaar naast de gewone omvormers (Enphase, APSystems, Growatt, Hoymiles), kleiner weergegeven dan de string-omvormers en met echte afbeelding.
 - Zoom per legplan; verberg-opties voor omvormer-afbeelding/label/sensor.
 - Portrait/landscape per paneel.
 - Visuele editor met slepen en snap-to-grid.
@@ -68,15 +75,22 @@ panels:
 | `zoom`      | number | `100`     | Startzoom in procent (40 tot 100). |
 | `font_scale`| number | `100`     | Tekstgrootte in procent (50 tot 200). |
 | `panels`    | list   | `[]`      | Panelen (enkel legplan). |
-| `inverters` | list   | `[]`      | Omvormers (enkel legplan). |
+| `inverters` | list   | `[]`      | Omvormers en micro-omvormers (enkel legplan). |
 | `inv_hide_image` | bool | `false` | Verberg de omvormer-afbeelding (alle omvormers). |
 | `inv_hide_label` | bool | `false` | Verberg het omvormer-label. |
 | `inv_hide_sensor`| bool | `false` | Verberg de omvormer-sensorwaarde. |
-| `connections` | list | `[]`     | Lijnen tussen items; elk met `from`, `to`, `curved`. |
+| `connections` | list | `[]`     | Lijnen tussen items; elk met `from`, `to`, `curved` en `color`. |
 | `layouts`   | list   | -         | Meerdere legplannen; elk met `name`, `panels`, `inverters`, `connections`, `zoom`. |
 
 Per paneel: `id`, `x`, `y` (rastercoordinaten), `orientation` (`portrait`/`landscape`),
 `entity` (Watt-sensor), `wp` (piekvermogen van dit paneel, voor de kleurschaal), `label`.
+
+Per omvormer: `id`, `x`, `y`, `brand`, `entity` (optioneel), `label`. Zet `micro: true` voor
+een micro-omvormer; het merk is dan een van `enphase`, `apsystems`, `growatt`, `hoymiles`.
+Zonder `micro` is het een string-omvormer (`goodwe`, `solaredge`, `growatt`, `solis`, `sunsynk`).
+
+Per verbinding: `from`, `to` (paneel- of omvormer-`id`), `curved` (recht of gebogen) en
+`color` (lijnkleur, standaard `#ffd54a`).
 
 ## Ontwikkeling
 Een los `dist/solar-layout-card.js`-bestand, geen build-stap nodig.
