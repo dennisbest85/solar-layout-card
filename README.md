@@ -1,7 +1,7 @@
 # Solar Layout Card
 
 ![hacs](https://img.shields.io/badge/HACS-Dashboard-41BDF5.svg)
-![version](https://img.shields.io/badge/version-1.1.7-f4c40f.svg)
+![version](https://img.shields.io/badge/version-1.1.8-f4c40f.svg)
 
 **English** · [Nederlands](#nederlands)
 
@@ -12,6 +12,12 @@ individually, and you build the layout with a drag-and-drop editor.
 ![Solar Layout Card example](images/preview.png)
 
 ![Micro-inverters](images/microinverters.png)
+
+### History time slider (since v1.1.7)
+
+Step back up to 12 hours to see each panel's output at that moment. A clock icon opens the slider; it returns to live automatically after 30 seconds.
+
+![History time slider](images/timeline.gif)
 
 ## Features
 - Layout on a grid, matching how the panels lie on your roof.
@@ -116,6 +122,12 @@ MIT, see [LICENSE](LICENSE).
 Een Home Assistant Lovelace-card die een legplan van je zonnepanelen toont, met de
 live PV-opbrengst in elk paneel. Panelen zijn per stuk portrait of landscape
 te plaatsen en de indeling maak je met een drag and drop editor.
+
+### Tijdbalk met historie (sinds v1.1.7)
+
+Ga tot 12 uur terug in de tijd om per paneel de opbrengst van dat moment te zien. Een klok-icoontje opent de schuif; na 30 seconden springt hij automatisch terug naar live.
+
+![Tijdbalk met historie](images/timeline.gif)
 
 ### Functies
 - Legplan op een raster, zoals de panelen op je dak liggen.

@@ -1,5 +1,5 @@
-/*! solar-layout-card v1.1.7 | MIT License */
-const VERSION = "1.1.7";
+/*! solar-layout-card v1.1.8 | MIT License */
+const VERSION = "1.1.8";
 
 /* ---------- i18n ----------
  * Follows Home Assistant's UI language (hass.language). Supported: nl, de, en.
@@ -566,6 +566,18 @@ class SolarLayoutCard extends HTMLElement {
     return Array.from(new Set(ids));
   }
 
+  // All entity ids used across every layout. History is fetched for all of
+  // them at once so the time slider works immediately on any tab, without a
+  // refetch each time you switch layouts.
+  _allEntities() {
+    const ids = [];
+    for (const l of (this._config.layouts || [])) {
+      for (const p of (l.panels || [])) if (p.entity) ids.push(p.entity);
+      for (const v of (l.inverters || [])) if (v.entity) ids.push(v.entity);
+    }
+    return Array.from(new Set(ids));
+  }
+
   // Target timestamp the slider currently points at (ms since epoch).
   _targetTime() {
     return Date.now() - this._timeOffset * 60000;
@@ -609,7 +621,7 @@ class SolarLayoutCard extends HTMLElement {
   _fetchHistory() {
     const hass = this._hass;
     if (!hass || typeof hass.callApi !== "function") return;
-    const entities = this._layoutEntities();
+    const entities = this._allEntities();
     entities.push("sun.sun");
     if (!entities.length) return;
     const token = ++this._historyToken;
@@ -904,6 +916,15 @@ class SolarLayoutCard extends HTMLElement {
     this.shadowRoot.querySelectorAll(".tab").forEach((el) => {
       el.addEventListener("click", () => {
         this._activeLayout = Number(el.getAttribute("data-idx")) || 0;
+        // If the time slider is open, make sure this layout's entities are in
+        // the history cache; fetch again if any are missing (e.g. the first
+        // fetch hadn't finished, or a layout was added since).
+        if (this._timeSliderOpen && this._timeOffset !== 0) {
+          const need = this._layoutEntities();
+          const missing = need.some((e) => !this._history[e]);
+          if (missing) this._fetchHistory();
+          this._armAutoReturn();
+        }
         this._render();
       });
     });

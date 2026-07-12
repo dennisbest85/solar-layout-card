@@ -4,6 +4,12 @@ Alle noemenswaardige wijzigingen aan deze card worden hier bijgehouden.
 Formaat volgt [Keep a Changelog](https://keepachangelog.com/) en
 [Semantic Versioning](https://semver.org/).
 
+## [1.1.8] - 2026-07-12
+### Opgelost
+- De tijdbalk werkte niet op andere legplannen dan het eerste tabblad. De historie werd alleen opgehaald voor de entiteiten van het op dat moment actieve legplan, waardoor panelen op een ander tabblad "geen historie" toonden. De historie wordt nu in een keer opgehaald voor de entiteiten van alle legplannen, zodat de tijdbalk meteen op elk tabblad werkt. Bij het wisselen van tabblad wordt zo nodig aanvullende historie opgehaald.
+### Toegevoegd
+- Afbeelding (GIF) van de tijdbalk in de README, met een korte uitleg dat dit een functie is sinds v1.1.7.
+
 ## [1.1.7] - 2026-07-12
 ### Opgelost
 - Het slepen van de tijdbalk kon halverwege blijven hangen. Binnenkomende state-updates van Home Assistant veroorzaakten een volledige herteken-actie die het schuif-element verving terwijl je het vasthield, waardoor de beweging stopte. Tijdens het slepen wordt nu niet meer volledig hertekend en worden alleen de waarden ter plekke ververst; bij loslaten hervat het normale gedrag. Er is ook een vangnet toegevoegd voor het geval de muisknop buiten de schuif wordt losgelaten.
