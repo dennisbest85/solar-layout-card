@@ -1,5 +1,5 @@
-/*! solar-layout-card v1.1.8 | MIT License */
-const VERSION = "1.1.8";
+/*! solar-layout-card v1.1.9 | MIT License */
+const VERSION = "1.1.9";
 
 /* ---------- i18n ----------
  * Follows Home Assistant's UI language (hass.language). Supported: nl, de, en.
@@ -740,6 +740,7 @@ class SolarLayoutCard extends HTMLElement {
                style="grid-column:${p.x + 1}/span ${w};
                       grid-row:${p.y + 1}/span ${h};
                       background:${bg}; --fg:${fg};"
+               data-id="${p.id}"
                data-entity="${p.entity}">
             <div class="cells"></div>
             <div class="reading">
@@ -778,6 +779,7 @@ class SolarLayoutCard extends HTMLElement {
                style="grid-column:${v.x + 1}/span ${dims.w};
                       grid-row:${v.y + 1}/span ${dims.h};
                       --inv:${brand.color};"
+               data-id="${v.id}"
                data-entity="${v.entity}">
             ${image}
             ${brandHtml}
@@ -1051,8 +1053,11 @@ class SolarLayoutCard extends HTMLElement {
     const sr = this.shadowRoot;
     layout.panels.forEach((p) => {
       if (!p.entity) return;
+      // Select by the panel's unique id, not its sensor: several panels may
+      // share the same sensor (e.g. a total split evenly), and selecting by
+      // entity would only update the first one.
       let el = null;
-      try { el = sr.querySelector(`.panel[data-entity="${cssEsc(p.entity)}"]`); } catch (e) { el = null; }
+      try { el = sr.querySelector(`.panel[data-id="${cssEsc(p.id)}"]`); } catch (e) { el = null; }
       if (!el) return;
       const { val, unit } = fmtAt(p.entity);
       const st = this._stateAt(hass, p.entity);
@@ -1068,7 +1073,7 @@ class SolarLayoutCard extends HTMLElement {
     (layout.inverters || []).forEach((iv) => {
       if (!iv.entity) return;
       let el = null;
-      try { el = sr.querySelector(`.inverter[data-entity="${cssEsc(iv.entity)}"] .inv-reading`); } catch (e) { el = null; }
+      try { el = sr.querySelector(`.inverter[data-id="${cssEsc(iv.id)}"] .inv-reading`); } catch (e) { el = null; }
       if (!el) return;
       const { val, unit } = fmtAt(iv.entity);
       el.textContent = `${val} ${unit}`;
