@@ -1,5 +1,5 @@
-/*! solar-layout-card v1.1.6 | MIT License */
-const VERSION = "1.1.6";
+/*! solar-layout-card v1.1.7 | MIT License */
+const VERSION = "1.1.7";
 
 /* ---------- i18n ----------
  * Follows Home Assistant's UI language (hass.language). Supported: nl, de, en.
@@ -480,6 +480,7 @@ class SolarLayoutCard extends HTMLElement {
     this._history = {};             // entity -> [{ t: ms, n: number }] (last 12h)
     this._historyToken = 0;         // guards against stale async fetches
     this._autoReturnTimer = null;   // 30s inactivity -> back to live
+    this._sliderDragging = false;   // true while the time slider is grabbed
   }
 
   // Minutes of history the slider can reach back (12h) and the step size.
@@ -516,6 +517,14 @@ class SolarLayoutCard extends HTMLElement {
 
   set hass(hass) {
     this._hass = hass;
+    // While the user is dragging the time slider, a full _render() would
+    // replace the slider element mid-drag and drop the interaction. Skip the
+    // rebuild and just refresh the in-place values instead; a normal render
+    // resumes as soon as the drag ends.
+    if (this._sliderDragging) {
+      this._renderGridValues();
+      return;
+    }
     this._render();
   }
 
@@ -948,7 +957,36 @@ class SolarLayoutCard extends HTMLElement {
       };
       // Live-update the label while dragging; throttle the grid re-render so
       // large layouts stay responsive. Each interaction re-arms auto-return.
+      // A drag-lock (_sliderDragging) prevents set hass from doing a full
+      // _render() mid-drag, which would replace the slider and drop the grab.
       let raf = null;
+      const startDrag = () => { this._sliderDragging = true; };
+      const endDrag = () => {
+        this._sliderDragging = false;
+        this._armAutoReturn();
+        this._render();
+      };
+      slider.addEventListener("pointerdown", startDrag);
+      slider.addEventListener("touchstart", startDrag, { passive: true });
+      slider.addEventListener("mousedown", startDrag);
+      slider.addEventListener("pointerup", endDrag);
+      slider.addEventListener("touchend", endDrag);
+      slider.addEventListener("mouseup", endDrag);
+      slider.addEventListener("pointercancel", endDrag);
+      // Safety net: if the pointer is released outside the slider, the element's
+      // own up-event may not fire, which would leave the drag-lock stuck on and
+      // freeze live updates. A one-shot window listener guarantees release.
+      slider.addEventListener("pointerdown", () => {
+        const release = () => {
+          endDrag();
+          window.removeEventListener("pointerup", release);
+          window.removeEventListener("mouseup", release);
+          window.removeEventListener("touchend", release);
+        };
+        window.addEventListener("pointerup", release);
+        window.addEventListener("mouseup", release);
+        window.addEventListener("touchend", release);
+      });
       slider.addEventListener("input", () => {
         applyLabel();
         this._armAutoReturn();
@@ -958,10 +996,12 @@ class SolarLayoutCard extends HTMLElement {
           this._renderGridValues();
         });
       });
+      // 'change' fires on release (and on keyboard use). If we're mid-drag,
+      // let endDrag handle the final render; otherwise (e.g. arrow keys) do it.
       slider.addEventListener("change", () => {
         applyLabel();
         this._armAutoReturn();
-        this._render();
+        if (!this._sliderDragging) this._render();
       });
     }
   }
@@ -989,7 +1029,9 @@ class SolarLayoutCard extends HTMLElement {
     };
     const sr = this.shadowRoot;
     layout.panels.forEach((p) => {
-      const el = sr.querySelector(`.panel[data-entity="${cssEsc(p.entity)}"]`);
+      if (!p.entity) return;
+      let el = null;
+      try { el = sr.querySelector(`.panel[data-entity="${cssEsc(p.entity)}"]`); } catch (e) { el = null; }
       if (!el) return;
       const { val, unit } = fmtAt(p.entity);
       const st = this._stateAt(hass, p.entity);
@@ -1003,7 +1045,9 @@ class SolarLayoutCard extends HTMLElement {
     });
     // inverter readings (colours don't apply to inverters)
     (layout.inverters || []).forEach((iv) => {
-      const el = sr.querySelector(`.inverter[data-entity="${cssEsc(iv.entity)}"] .inv-reading`);
+      if (!iv.entity) return;
+      let el = null;
+      try { el = sr.querySelector(`.inverter[data-entity="${cssEsc(iv.entity)}"] .inv-reading`); } catch (e) { el = null; }
       if (!el) return;
       const { val, unit } = fmtAt(iv.entity);
       el.textContent = `${val} ${unit}`;

@@ -4,6 +4,10 @@ Alle noemenswaardige wijzigingen aan deze card worden hier bijgehouden.
 Formaat volgt [Keep a Changelog](https://keepachangelog.com/) en
 [Semantic Versioning](https://semver.org/).
 
+## [1.1.7] - 2026-07-12
+### Opgelost
+- Het slepen van de tijdbalk kon halverwege blijven hangen. Binnenkomende state-updates van Home Assistant veroorzaakten een volledige herteken-actie die het schuif-element verving terwijl je het vasthield, waardoor de beweging stopte. Tijdens het slepen wordt nu niet meer volledig hertekend en worden alleen de waarden ter plekke ververst; bij loslaten hervat het normale gedrag. Er is ook een vangnet toegevoegd voor het geval de muisknop buiten de schuif wordt losgelaten.
+
 ## [1.1.6] - 2026-07-12
 ### Toegevoegd
 - Tijdbalk met historie op de card. Een klok-icoontje naast de zoomknoppen opent een schuif waarmee je tot 12 uur terug kunt in de tijd, in stappen van 15 minuten. De panelen en omvormers tonen dan de opbrengst van dat moment, met kleuren die bij die waarden horen. Na 30 seconden zonder interactie springt de weergave automatisch terug naar live. De schuif is alleen voor de weergave en verandert de configuratie niet.
