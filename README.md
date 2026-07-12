@@ -1,7 +1,7 @@
 # Solar Layout Card
 
 ![hacs](https://img.shields.io/badge/HACS-Dashboard-41BDF5.svg)
-![version](https://img.shields.io/badge/version-1.1.4-f4c40f.svg)
+![version](https://img.shields.io/badge/version-1.1.6-f4c40f.svg)
 
 **English** · [Nederlands](#nederlands)
 
@@ -28,6 +28,7 @@ individually, and you build the layout with a drag-and-drop editor.
 - Inverters shown with a real image (GoodWe, SolarEdge, Growatt, Solis, Sunsynk).
 - Connection lines between panels and to the inverter, straight or curved.
 - Flowing dots along the connection lines (toggle with the "Moving dots" checkbox in the display options at the top of the editor, or via `flow_dots` in the config).
+- History time slider: a clock icon on the card reveals a slider to step back up to 12 hours in 15-minute steps, showing each panel's output at that moment. It returns to live automatically after 30 seconds. This is view-only and never changes your configuration.
 - Multilingual: the texts follow the Home Assistant language (`hass.language`). Dutch, German and English are supported; other languages fall back to English.
 - Colour configurable per connection line (default amber).
 - Micro-inverters placeable alongside the regular inverters (Enphase, APSystems, Growatt, Hoymiles), shown small (3x2 cells) and with a real image.
@@ -131,6 +132,7 @@ te plaatsen en de indeling maak je met een drag and drop editor.
 - Omvormers met echte afbeelding (GoodWe, SolarEdge, Growatt, Solis, Sunsynk).
 - Verbindingslijnen tussen panelen en naar de omvormer, recht of gebogen.
 - Stromende bolletjes over de verbindingslijnen (aan/uit te zetten via de checkbox "Bewegende bolletjes" bij de weergave-opties bovenaan de editor, of via `flow_dots` in de config).
+- Tijdbalk met historie: een klok-icoontje op de card opent een schuif waarmee je tot 12 uur terug kunt in stappen van 15 minuten, met per paneel de opbrengst van dat moment. Na 30 seconden springt hij automatisch terug naar live. Dit is alleen weergave en verandert je configuratie niet.
 - Meertalig: de teksten volgen de taal van Home Assistant (`hass.language`). Ondersteund zijn Nederlands, Duits en Engels; andere talen krijgen automatisch Engels.
 - Kleur per verbindingslijn instelbaar (standaard amber).
 - Micro-omvormers plaatsbaar naast de gewone omvormers (Enphase, APSystems, Growatt, Hoymiles), klein weergegeven (3x2 cellen) en met echte afbeelding.

@@ -4,6 +4,11 @@ Alle noemenswaardige wijzigingen aan deze card worden hier bijgehouden.
 Formaat volgt [Keep a Changelog](https://keepachangelog.com/) en
 [Semantic Versioning](https://semver.org/).
 
+## [1.1.6] - 2026-07-12
+### Toegevoegd
+- Tijdbalk met historie op de card. Een klok-icoontje naast de zoomknoppen opent een schuif waarmee je tot 12 uur terug kunt in de tijd, in stappen van 15 minuten. De panelen en omvormers tonen dan de opbrengst van dat moment, met kleuren die bij die waarden horen. Na 30 seconden zonder interactie springt de weergave automatisch terug naar live. De schuif is alleen voor de weergave en verandert de configuratie niet.
+- De historie wordt in een keer opgehaald uit de recorder van Home Assistant wanneer je de schuif opent; het slepen leest daarna uit die cache, zodat het soepel blijft. Sensoren zonder historie (bijvoorbeeld als de recorder ze uitsluit) tonen "geen historie".
+
 ## [1.1.4] - 2026-07-11
 ### Toegevoegd
 - Meertaligheid. De teksten in de card en de editor volgen nu de taal van Home Assistant (`hass.language`): Nederlands, Duits en Engels. Talen die niet ondersteund worden vallen automatisch terug op Engels. Dit geldt ook voor losse woorden en tooltips zoals "Slaapt" en "Overdag maar 0 W".

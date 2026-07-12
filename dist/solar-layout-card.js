@@ -1,5 +1,5 @@
-/*! solar-layout-card v1.1.4 | MIT License */
-const VERSION = "1.1.4";
+/*! solar-layout-card v1.1.6 | MIT License */
+const VERSION = "1.1.6";
 
 /* ---------- i18n ----------
  * Follows Home Assistant's UI language (hass.language). Supported: nl, de, en.
@@ -14,6 +14,12 @@ const TRANSLATIONS = {
     sleep_badge: "Zzz",
     sleep_title: "Asleep (sun down, no output)",
     zoom: "Zoom",
+    // time slider (card)
+    time_live: "Live",
+    time_toggle: "Show history slider",
+    time_ago: "{h}h {m}m ago",
+    time_now: "Now (live)",
+    time_no_history: "no history",
     // editor - fields
     f_title: "Title",
     f_reference: "Default Wp for new panels (colour scale is per panel)",
@@ -71,6 +77,11 @@ const TRANSLATIONS = {
     sleep_badge: "Zzz",
     sleep_title: "Slaapt (zon onder, geen opbrengst)",
     zoom: "Zoom",
+    time_live: "Live",
+    time_toggle: "Toon tijdbalk",
+    time_ago: "{h}u {m}m geleden",
+    time_now: "Nu (live)",
+    time_no_history: "geen historie",
     f_title: "Titel",
     f_reference: "Standaard Wp voor nieuwe panelen (kleurschaal is per paneel)",
     f_color_off: "Kleur uit / geen zon",
@@ -123,6 +134,11 @@ const TRANSLATIONS = {
     sleep_badge: "Zzz",
     sleep_title: "Schläft (Sonne unter, kein Ertrag)",
     zoom: "Zoom",
+    time_live: "Live",
+    time_toggle: "Verlaufsregler anzeigen",
+    time_ago: "vor {h}h {m}m",
+    time_now: "Jetzt (live)",
+    time_no_history: "kein Verlauf",
     f_title: "Titel",
     f_reference: "Standard-Wp für neue Module (Farbskala ist pro Modul)",
     f_color_off: "Farbe aus / keine Sonne",
@@ -187,6 +203,8 @@ const CARD_TAG = "solar-layout-card";
 const EDITOR_TAG = "solar-layout-card-editor";
 
 const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
+// Escape a string for safe use inside a double-quoted attribute selector.
+const cssEsc = (s) => String(s == null ? "" : s).replace(/(["\\])/g, "\\$1");
 const uid = () => Math.random().toString(36).slice(2, 9);
 
 function fmt(hass, entity) {
@@ -456,7 +474,18 @@ class SolarLayoutCard extends HTMLElement {
     this._config = null;
     this._hass = null;
     this._activeLayout = 0;
+    // time-travel slider state (view-only, never persisted to config)
+    this._timeSliderOpen = false;   // clock icon toggles this
+    this._timeOffset = 0;           // minutes back from now; 0 = live
+    this._history = {};             // entity -> [{ t: ms, n: number }] (last 12h)
+    this._historyToken = 0;         // guards against stale async fetches
+    this._autoReturnTimer = null;   // 30s inactivity -> back to live
   }
+
+  // Minutes of history the slider can reach back (12h) and the step size.
+  static get TIME_MAX_MIN() { return 12 * 60; }
+  static get TIME_STEP_MIN() { return 15; }
+  static get TIME_AUTORETURN_MS() { return 30000; }
 
   static getConfigElement() {
     return document.createElement(EDITOR_TAG);
@@ -517,6 +546,112 @@ class SolarLayoutCard extends HTMLElement {
     return { cols: cols + 1, rows: rows + 1 };
   }
 
+  /* ---- time-travel helpers (view only) ---- */
+
+  // All entity ids used by the current layout (panels + inverters).
+  _layoutEntities() {
+    const l = this._layout();
+    const ids = [];
+    for (const p of l.panels) if (p.entity) ids.push(p.entity);
+    for (const v of (l.inverters || [])) if (v.entity) ids.push(v.entity);
+    return Array.from(new Set(ids));
+  }
+
+  // Target timestamp the slider currently points at (ms since epoch).
+  _targetTime() {
+    return Date.now() - this._timeOffset * 60000;
+  }
+
+  // Resolve a state object for an entity at the currently selected time.
+  // At offset 0 (live) we use hass.states directly. Otherwise we look up the
+  // cached history and return the last sample at or before the target time.
+  // Returns { state, attributes } shaped like a hass state, or null.
+  _stateAt(hass, entity) {
+    if (!entity || !hass) return null;
+    const live = hass.states[entity] || null;
+    if (this._timeOffset === 0) return live;
+    const series = this._history[entity];
+    const unit = live && live.attributes ? live.attributes.unit_of_measurement || "" : "";
+    if (!series || !series.length) return { state: "unavailable", attributes: { unit_of_measurement: unit }, _nohist: true };
+    const target = this._targetTime();
+    let chosen = null;
+    for (const s of series) {
+      if (s.t <= target) chosen = s; else break;
+    }
+    if (!chosen) chosen = series[0]; // target older than first sample: use earliest
+    return { state: String(chosen.n), attributes: { unit_of_measurement: unit } };
+  }
+
+  // Daytime check honouring the selected time: use sun.sun history when
+  // travelling back, so night-time samples show the sleep badge correctly.
+  _isDaytimeAt(hass) {
+    if (this._timeOffset === 0) return isDaytime(hass);
+    const series = this._history["sun.sun"];
+    if (!series || !series.length) return isDaytime(hass);
+    const target = this._targetTime();
+    let chosen = null;
+    for (const s of series) { if (s.t <= target) chosen = s; else break; }
+    if (!chosen) chosen = series[0];
+    return chosen.s === "above_horizon";
+  }
+
+  // Fetch ~12h of history for every layout entity (plus sun.sun) in one call
+  // and cache it. Stepping the slider then reads from cache (no refetch).
+  _fetchHistory() {
+    const hass = this._hass;
+    if (!hass || typeof hass.callApi !== "function") return;
+    const entities = this._layoutEntities();
+    entities.push("sun.sun");
+    if (!entities.length) return;
+    const token = ++this._historyToken;
+    const end = new Date();
+    const start = new Date(end.getTime() - SolarLayoutCard.TIME_MAX_MIN * 60000);
+    const filter = encodeURIComponent(entities.join(","));
+    const url =
+      `history/period/${start.toISOString()}` +
+      `?end_time=${encodeURIComponent(end.toISOString())}` +
+      `&filter_entity_id=${filter}&minimal_response&no_attributes`;
+    hass.callApi("GET", url)
+      .then((data) => {
+        if (token !== this._historyToken) return; // stale
+        const map = {};
+        for (const arr of (data || [])) {
+          if (!arr || !arr.length) continue;
+          const eid = arr[0].entity_id;
+          if (!eid) continue;
+          const num = [];
+          const raw = [];
+          for (const item of arr) {
+            const ts = Date.parse(item.last_changed || item.last_updated || item.lu);
+            if (!Number.isFinite(ts)) continue;
+            const n = Number(item.state);
+            num.push({ t: ts, n: Number.isFinite(n) ? n : NaN });
+            raw.push({ t: ts, s: item.state });
+          }
+          num.sort((a, b) => a.t - b.t);
+          raw.sort((a, b) => a.t - b.t);
+          map[eid] = num;
+          if (eid === "sun.sun") map[eid] = raw; // sun uses string state
+        }
+        this._history = map;
+        this._render();
+      })
+      .catch(() => { /* recorder disabled or entity excluded: silently keep live */ });
+  }
+
+  // Any slider interaction (re)starts the 30s inactivity timer.
+  _armAutoReturn() {
+    if (this._autoReturnTimer) clearTimeout(this._autoReturnTimer);
+    this._autoReturnTimer = setTimeout(() => {
+      this._timeOffset = 0;
+      this._render();
+    }, SolarLayoutCard.TIME_AUTORETURN_MS);
+  }
+
+  disconnectedCallback() {
+    if (this._autoReturnTimer) clearTimeout(this._autoReturnTimer);
+  }
+
   _render() {
     if (!this._config) return;
     const hass = this._hass;
@@ -526,7 +661,7 @@ class SolarLayoutCard extends HTMLElement {
     const fontScale = clamp(Number(this._config.font_scale) || 100, 50, 200) / 100;
     const layouts = this._config.layouts;
     const layout = this._layout();
-    const daytime = isDaytime(hass);
+    const daytime = this._isDaytimeAt(hass);
     // zoom is per-layout; fall back to global
     const zoom = clamp(Number(layout.zoom != null ? layout.zoom : this._config.zoom) || 100, 40, 100);
 
@@ -548,13 +683,32 @@ class SolarLayoutCard extends HTMLElement {
       layout.panels.find((p) => p.id === id) ||
       (layout.inverters || []).find((v) => v.id === id);
 
+    // Time-aware value formatter: at live it matches fmt(), otherwise it reads
+    // the historical sample resolved by _stateAt().
+    const fmtAt = (entity) => {
+      const st = this._stateAt(hass, entity);
+      if (!st) return { val: "—", unit: "" };
+      if (st._nohist) return { val: t(hass, "time_no_history"), unit: "" };
+      const unit = st.attributes.unit_of_measurement || "";
+      const num = Number(st.state);
+      const val = Number.isFinite(num)
+        ? num.toLocaleString(undefined, { maximumFractionDigits: 2 })
+        : st.state;
+      return { val, unit };
+    };
+    const numAt = (entity) => {
+      const st = this._stateAt(hass, entity);
+      return st ? Number(st.state) : NaN;
+    };
+    const hasStateAt = (entity) => !!(entity && this._stateAt(hass, entity));
+
     const panelsHtml = layout.panels
       .map((p) => {
         const w = p.orientation === "landscape" ? PANEL_H : PANEL_W;
         const h = p.orientation === "landscape" ? PANEL_W : PANEL_H;
-        const { val, unit } = fmt(hass, p.entity);
-        const hasState = hass && p.entity && hass.states[p.entity];
-        const num = hasState ? Number(hass.states[p.entity].state) : NaN;
+        const { val, unit } = fmtAt(p.entity);
+        const hasState = hasStateAt(p.entity);
+        const num = numAt(p.entity);
         const wp = Number(p.wp) > 0 ? Number(p.wp) : this._config.reference;
         const ratio = num / wp;
         const bg = colorFor(ratio, off, max);
@@ -581,9 +735,9 @@ class SolarLayoutCard extends HTMLElement {
       .map((v) => {
         const brand = invMeta(v);
         const dims = invDims(v);
-        const { val, unit } = fmt(hass, v.entity);
-        const hasState = hass && v.entity && hass.states[v.entity];
-        const num = hasState ? Number(hass.states[v.entity].state) : NaN;
+        const { val, unit } = fmtAt(v.entity);
+        const hasState = hasStateAt(v.entity);
+        const num = numAt(v.entity);
         const showReading = !hideSensor && hasState;
         const reading = showReading ? `<div class="inv-reading">${val} ${unit}</div>` : "";
         const image = hideImage
@@ -676,18 +830,45 @@ class SolarLayoutCard extends HTMLElement {
           .join("")}</div>`
       : "";
 
+    // ---- time slider ----
+    const tMax = SolarLayoutCard.TIME_MAX_MIN;
+    const tStep = SolarLayoutCard.TIME_STEP_MIN;
+    // slider value: minutes back. We invert visually so "right = now".
+    const sliderVal = tMax - this._timeOffset;
+    let timeLabel;
+    if (this._timeOffset === 0) {
+      timeLabel = t(hass, "time_now");
+    } else {
+      const h = Math.floor(this._timeOffset / 60);
+      const m = this._timeOffset % 60;
+      timeLabel = t(hass, "time_ago").replace("{h}", h).replace("{m}", m);
+    }
+    const clockActive = this._timeSliderOpen ? "active" : "";
+    const liveActive = this._timeOffset === 0 ? "live-on" : "";
+    const sliderRow = this._timeSliderOpen
+      ? `<div class="timebar">
+           <input class="timeslider" type="range" min="0" max="${tMax}" step="${tStep}"
+                  value="${sliderVal}" aria-label="${t(hass, "time_toggle")}" />
+           <span class="timelabel ${liveActive}">${timeLabel}</span>
+         </div>`
+      : "";
+
     this.shadowRoot.innerHTML = `
       <style>${SolarLayoutCard.styles(cols, rows, zoom, fontScale)}</style>
       <ha-card>
         <div class="topbar">
           ${this._config.title ? `<div class="header">${this._config.title}</div>` : `<span></span>`}
-          <div class="zoombar" title="${t(hass, "zoom")}">
-            <button class="zoom-out" aria-label="Verklein">-</button>
-            <span class="zoom-val">${zoom}%</span>
-            <button class="zoom-in" aria-label="Vergroot">+</button>
+          <div class="tools">
+            <button class="clockbtn ${clockActive}" title="${t(hass, "time_toggle")}" aria-label="${t(hass, "time_toggle")}">&#x1F551;</button>
+            <div class="zoombar" title="${t(hass, "zoom")}">
+              <button class="zoom-out" aria-label="Verklein">-</button>
+              <span class="zoom-val">${zoom}%</span>
+              <button class="zoom-in" aria-label="Vergroot">+</button>
+            </div>
           </div>
         </div>
         ${tabsHtml}
+        ${sliderRow}
         <div class="gridwrap">
           <div class="grid">
             ${connSvg}
@@ -728,6 +909,105 @@ class SolarLayoutCard extends HTMLElement {
     const zo = this.shadowRoot.querySelector(".zoom-out");
     if (zi) zi.addEventListener("click", (e) => { e.stopPropagation(); setZoom(zoom + step); });
     if (zo) zo.addEventListener("click", (e) => { e.stopPropagation(); setZoom(zoom - step); });
+
+    // clock icon toggles the history slider
+    const clockBtn = this.shadowRoot.querySelector(".clockbtn");
+    if (clockBtn) {
+      clockBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this._timeSliderOpen = !this._timeSliderOpen;
+        if (this._timeSliderOpen) {
+          this._fetchHistory();   // load 12h of history when opening
+          this._armAutoReturn();
+        } else {
+          this._timeOffset = 0;   // closing returns to live
+          if (this._autoReturnTimer) clearTimeout(this._autoReturnTimer);
+        }
+        this._render();
+      });
+    }
+
+    // time slider: value is "minutes since 12h ago", so right = now.
+    const slider = this.shadowRoot.querySelector(".timeslider");
+    const label = this.shadowRoot.querySelector(".timelabel");
+    if (slider) {
+      const applyLabel = () => {
+        const back = SolarLayoutCard.TIME_MAX_MIN - Number(slider.value);
+        this._timeOffset = clamp(back, 0, SolarLayoutCard.TIME_MAX_MIN);
+        if (label) {
+          if (this._timeOffset === 0) {
+            label.textContent = t(this._hass, "time_now");
+            label.classList.add("live-on");
+          } else {
+            const h = Math.floor(this._timeOffset / 60);
+            const m = this._timeOffset % 60;
+            label.textContent = t(this._hass, "time_ago").replace("{h}", h).replace("{m}", m);
+            label.classList.remove("live-on");
+          }
+        }
+      };
+      // Live-update the label while dragging; throttle the grid re-render so
+      // large layouts stay responsive. Each interaction re-arms auto-return.
+      let raf = null;
+      slider.addEventListener("input", () => {
+        applyLabel();
+        this._armAutoReturn();
+        if (raf) return;
+        raf = requestAnimationFrame(() => {
+          raf = null;
+          this._renderGridValues();
+        });
+      });
+      slider.addEventListener("change", () => {
+        applyLabel();
+        this._armAutoReturn();
+        this._render();
+      });
+    }
+  }
+
+  // Lightweight value refresh used while dragging the time slider: updates the
+  // panel/inverter readings and colours in place without rebuilding the DOM
+  // (which would interrupt the drag). A full _render() runs on release.
+  _renderGridValues() {
+    const hass = this._hass;
+    if (!hass || !this._config) return;
+    const layout = this._layout();
+    const off = this._config.color_off;
+    const max = this._config.color_max;
+    const daytime = this._isDaytimeAt(hass);
+    const fmtAt = (entity) => {
+      const st = this._stateAt(hass, entity);
+      if (!st) return { val: "—", unit: "" };
+      if (st._nohist) return { val: t(hass, "time_no_history"), unit: "" };
+      const unit = st.attributes.unit_of_measurement || "";
+      const num = Number(st.state);
+      const val = Number.isFinite(num)
+        ? num.toLocaleString(undefined, { maximumFractionDigits: 2 })
+        : st.state;
+      return { val, unit };
+    };
+    const sr = this.shadowRoot;
+    layout.panels.forEach((p) => {
+      const el = sr.querySelector(`.panel[data-entity="${cssEsc(p.entity)}"]`);
+      if (!el) return;
+      const { val, unit } = fmtAt(p.entity);
+      const st = this._stateAt(hass, p.entity);
+      const num = st ? Number(st.state) : NaN;
+      const wp = Number(p.wp) > 0 ? Number(p.wp) : this._config.reference;
+      const ratio = num / wp;
+      el.style.background = colorFor(ratio, off, max);
+      el.style.setProperty("--fg", textColorFor(ratio, off, max));
+      const v = el.querySelector(".value"); if (v) v.textContent = val;
+      const u = el.querySelector(".unit"); if (u) u.textContent = unit;
+    });
+    // inverter readings (colours don't apply to inverters)
+    (layout.inverters || []).forEach((iv) => {
+      const el = sr.querySelector(`.inverter[data-entity="${cssEsc(iv.entity)}"] .inv-reading`);
+      if (!el) return;
+      const { val, unit } = fmtAt(iv.entity);
+      el.textContent = `${val} ${unit}`;
+    });
   }
 
   static styles(cols, rows, zoom, fontScale) {
@@ -759,6 +1039,34 @@ class SolarLayoutCard extends HTMLElement {
       }
       .zoombar button:hover { filter: brightness(0.95); }
       .zoom-val { min-width: 38px; text-align: center; }
+      .tools { display: inline-flex; align-items: center; gap: 8px; }
+      .clockbtn {
+        width: 28px; height: 28px; border-radius: 6px; cursor: pointer;
+        border: 1px solid var(--divider-color, #ccc);
+        background: var(--card-background-color, #fff);
+        color: var(--primary-text-color); font-size: .95rem; line-height: 1;
+        display: inline-flex; align-items: center; justify-content: center;
+      }
+      .clockbtn:hover { filter: brightness(0.95); }
+      .clockbtn.active {
+        background: var(--primary-color, #2b7cff);
+        border-color: var(--primary-color, #2b7cff);
+        color: var(--text-primary-color, #fff);
+      }
+      .timebar {
+        display: flex; align-items: center; gap: 10px;
+        padding: 2px 4px 10px;
+      }
+      .timeslider {
+        flex: 1; accent-color: var(--primary-color, #2b7cff);
+        cursor: pointer; height: 4px;
+      }
+      .timelabel {
+        min-width: 96px; text-align: right;
+        font-size: .8rem; color: var(--secondary-text-color);
+        font-variant-numeric: tabular-nums;
+      }
+      .timelabel.live-on { color: var(--primary-color, #2b7cff); font-weight: 600; }
       .gridwrap {
         width: ${(scale * 100).toFixed(2)}%;
       }
