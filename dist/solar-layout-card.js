@@ -1,5 +1,5 @@
-/*! solar-layout-card v1.1.9 | MIT License */
-const VERSION = "1.1.9";
+/*! solar-layout-card v1.2.0 | MIT License */
+const VERSION = "1.2.0";
 
 /* ---------- i18n ----------
  * Follows Home Assistant's UI language (hass.language). Supported: nl, de, en.
@@ -354,6 +354,10 @@ function normalizeConfig(config) {
     // animated bubbles along the connection lines; on unless explicitly false
     flow_dots: config.flow_dots !== false,
   };
+  // Preserve card-mod styling config so it survives normalisation. card-mod
+  // reads either `card_mod:` (object) or a bare `style:` string.
+  if (config.card_mod != null) base.card_mod = config.card_mod;
+  if (config.style != null) base.style = config.style;
   const ref = base.reference;
 
   const normPanel = (p) => ({
@@ -429,6 +433,9 @@ function serializeConfig(cfg) {
   if (cfg.inv_hide_sensor) out.inv_hide_sensor = true;
   if (cfg.inv_hide_image) out.inv_hide_image = true;
   if (cfg.flow_dots === false) out.flow_dots = false;
+  // Keep any card-mod styling the user set, so editing in the UI doesn't drop it.
+  if (cfg.card_mod != null) out.card_mod = cfg.card_mod;
+  if (cfg.style != null) out.style = cfg.style;
 
   const cleanLayout = (l) => {
     const o = { name: l.name, panels: l.panels };
@@ -673,6 +680,43 @@ class SolarLayoutCard extends HTMLElement {
     if (this._autoReturnTimer) clearTimeout(this._autoReturnTimer);
   }
 
+  // Hand our config to card-mod (github.com/thomasloven/lovelace-card-mod) so
+  // users can restyle the card with the usual `card_mod:`/`style:` YAML. This
+  // is a no-op when card-mod isn't installed. Styles target the <ha-card>
+  // inside our shadow root, matching how card-mod treats custom cards that
+  // contain an ha-card element.
+  _applyCardMod() {
+    const cfg = this._config && (this._config.card_mod || this._config.style);
+    if (!cfg) return;
+    if (!window.customElements || !customElements.whenDefined) return;
+    const haCard = this.shadowRoot && this.shadowRoot.querySelector("ha-card");
+    if (!haCard) return;
+    // Normalise: card-mod accepts either a `card_mod:` object or a bare
+    // `style:` string. Wrap a plain string into { style: ... }.
+    const modConfig = this._config.card_mod
+      ? this._config.card_mod
+      : { style: this._config.style };
+    customElements.whenDefined("card-mod").then((cardMod) => {
+      try {
+        // Some card-mod builds expose applyToElement on the resolved module,
+        // others on the customElements constructor; support both.
+        const applier =
+          (cardMod && cardMod.applyToElement) ||
+          (customElements.get("card-mod") && customElements.get("card-mod").applyToElement);
+        if (typeof applier !== "function") return;
+        applier(
+          haCard,
+          "solar-layout-card",
+          modConfig,
+          { config: this._config },
+          false // styles apply to the ha-card element itself, not its shadow root
+        );
+      } catch (e) {
+        /* card-mod not ready or incompatible: ignore, card still works */
+      }
+    });
+  }
+
   _render() {
     if (!this._config) return;
     const hass = this._hass;
@@ -900,6 +944,12 @@ class SolarLayoutCard extends HTMLElement {
         </div>
       </ha-card>
     `;
+
+    // Re-apply card-mod styling after every render. Because _render() rewrites
+    // innerHTML wholesale, any <card-mod> element injected previously is wiped,
+    // so we hand the config back to card-mod each time. No-op if card-mod isn't
+    // installed or no card_mod/style config is present.
+    this._applyCardMod();
 
     this.shadowRoot.querySelectorAll(".panel, .inverter").forEach((el) => {
       el.addEventListener("click", () => {

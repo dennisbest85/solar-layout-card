@@ -1,7 +1,7 @@
 # Solar Layout Card
 
 ![hacs](https://img.shields.io/badge/HACS-Dashboard-41BDF5.svg)
-![version](https://img.shields.io/badge/version-1.1.9-f4c40f.svg)
+![version](https://img.shields.io/badge/version-1.2.0-f4c40f.svg)
 
 **English** · [Nederlands](#nederlands)
 
@@ -106,6 +106,24 @@ appears on the inverter. This mirrors the red 0 W warning that panels get during
 
 Per connection: `from`, `to` (panel or inverter `id`), `curved` (straight or curved) and
 `color` (line colour, default `#ffd54a`).
+
+## Styling with card-mod
+
+The card supports [card-mod](https://github.com/thomasloven/lovelace-card-mod), so you can restyle it with the usual YAML, for example to remove the border, background and shadow:
+
+```yaml
+type: custom:solar-layout-card
+card_mod:
+  style: |
+    ha-card {
+      border: 0 !important;
+      background: none !important;
+      box-shadow: none !important;
+    }
+# ... your panels, inverters, etc.
+```
+
+The styling is re-applied after every render, so it stays in place when the sensor values update. If card-mod is not installed, the `card_mod:` block is simply ignored.
 
 ## Development
 A single `dist/solar-layout-card.js` file, no build step needed.
@@ -217,6 +235,24 @@ die panelen overdag krijgen.
 
 Per verbinding: `from`, `to` (paneel- of omvormer-`id`), `curved` (recht of gebogen) en
 `color` (lijnkleur, standaard `#ffd54a`).
+
+### Stylen met card-mod
+
+De card ondersteunt [card-mod](https://github.com/thomasloven/lovelace-card-mod), zodat je hem met de gebruikelijke YAML kunt herstijlen, bijvoorbeeld om de rand, achtergrond en schaduw weg te halen:
+
+```yaml
+type: custom:solar-layout-card
+card_mod:
+  style: |
+    ha-card {
+      border: 0 !important;
+      background: none !important;
+      box-shadow: none !important;
+    }
+# ... je panelen, omvormers, enzovoort.
+```
+
+De styling wordt na elke hertekening opnieuw toegepast, zodat hij blijft staan wanneer de sensorwaarden updaten. Is card-mod niet geinstalleerd, dan wordt het `card_mod:`-blok gewoon genegeerd.
 
 ### Ontwikkeling
 Een los `dist/solar-layout-card.js`-bestand, geen build-stap nodig.

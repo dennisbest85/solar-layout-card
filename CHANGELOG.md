@@ -4,6 +4,10 @@ Alle noemenswaardige wijzigingen aan deze card worden hier bijgehouden.
 Formaat volgt [Keep a Changelog](https://keepachangelog.com/) en
 [Semantic Versioning](https://semver.org/).
 
+## [1.2.0] - 2026-07-12
+### Toegevoegd
+- Ondersteuning voor card-mod (github.com/thomasloven/lovelace-card-mod). Je kunt de card nu herstijlen met de gebruikelijke `card_mod:`- of `style:`-YAML, bijvoorbeeld om de rand, achtergrond of schaduw aan te passen. De styling wordt na elke hertekening opnieuw toegepast, zodat hij niet verdwijnt wanneer de sensorwaarden updaten. Zonder card-mod geinstalleerd verandert er niets.
+
 ## [1.1.9] - 2026-07-12
 ### Opgelost
 - Als meerdere panelen dezelfde sensor gebruiken (bijvoorbeeld een omvormertotaal dat handmatig door het aantal panelen wordt gedeeld), bewoog tijdens het slepen van de tijdbalk maar een van die panelen mee. De waarden werden opgezocht op sensor, en dan wordt alleen het eerste paneel gevonden. Panelen en omvormers worden nu bijgewerkt op hun eigen unieke id, zodat alle panelen met dezelfde sensor tegelijk meebewegen met de tijdbalk.
