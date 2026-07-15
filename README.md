@@ -1,7 +1,7 @@
 # Solar Layout Card
 
 ![hacs](https://img.shields.io/badge/HACS-Dashboard-41BDF5.svg)
-![version](https://img.shields.io/badge/version-1.2.0-f4c40f.svg)
+![version](https://img.shields.io/badge/version-1.3.0-f4c40f.svg)
 
 **English** · [Nederlands](#nederlands)
 
@@ -91,6 +91,10 @@ panels:
 | `inv_hide_label` | bool | `false` | Hide the inverter label. |
 | `inv_hide_sensor`| bool | `false` | Hide the inverter sensor value. |
 | `flow_dots`  | bool | `true`  | Toggle the moving dots along the connection lines. |
+| `weather_entity` | string | - | Weather entity for the footer bar. Off if unset. |
+| `forecast_entity` | string | - | Expected-output sensor (e.g. Forecast.Solar/Solcast) for the footer. Off if unset. |
+| `total_entity` | string | - | Sensor for the total; if unset, the total is auto-summed from unique panel sensors. |
+| `show_total` | bool | `true` | Show the current total in the footer bar. |
 | `connections` | list | `[]`     | Lines between items; each with `from`, `to`, `curved` and `color`. |
 | `layouts`   | list   | -         | Multiple layouts; each with `name`, `panels`, `inverters`, `connections`, `zoom`. |
 
@@ -106,6 +110,22 @@ appears on the inverter. This mirrors the red 0 W warning that panels get during
 
 Per connection: `from`, `to` (panel or inverter `id`), `curved` (straight or curved) and
 `color` (line colour, default `#ffd54a`).
+
+## Time slider and footer bar
+
+The clock icon opens a time slider that steps back up to 12 hours in 15-minute steps. Next to it, a play button runs through the day at speed (the sun visibly moves across the panels) and a rewind button jumps to the start of the range. It returns to live automatically after 30 seconds of inactivity.
+
+An optional footer bar can show the weather, the expected output, and the current total. It is off by default and only appears when you configure at least one of these:
+
+```yaml
+type: custom:solar-layout-card
+weather_entity: weather.home
+forecast_entity: sensor.solcast_pv_forecast_forecast_now   # or Forecast.Solar
+# total_entity: sensor.pv_total   # optional; auto-summed from panels if omitted
+# show_total: true                # default
+```
+
+The total counts each unique sensor once, so panels that share the same sensor are not double-counted.
 
 ## Styling with card-mod
 
@@ -219,6 +239,10 @@ panels:
 | `inv_hide_label` | bool | `false` | Verberg het omvormer-label. |
 | `inv_hide_sensor`| bool | `false` | Verberg de omvormer-sensorwaarde. |
 | `flow_dots`  | bool | `true`  | Bewegende bolletjes over de verbindingslijnen aan/uit. |
+| `weather_entity` | string | - | Weer-entity voor de onderbalk. Uit als niet ingesteld. |
+| `forecast_entity` | string | - | Sensor met verwachte opbrengst (bijv. Forecast.Solar/Solcast) voor de onderbalk. Uit als niet ingesteld. |
+| `total_entity` | string | - | Sensor voor het totaal; zonder deze wordt het totaal automatisch opgeteld uit de unieke paneel-sensoren. |
+| `show_total` | bool | `true` | Toon het actuele totaal in de onderbalk. |
 | `connections` | list | `[]`     | Lijnen tussen items; elk met `from`, `to`, `curved` en `color`. |
 | `layouts`   | list   | -         | Meerdere legplannen; elk met `name`, `panels`, `inverters`, `connections`, `zoom`. |
 
@@ -235,6 +259,22 @@ die panelen overdag krijgen.
 
 Per verbinding: `from`, `to` (paneel- of omvormer-`id`), `curved` (recht of gebogen) en
 `color` (lijnkleur, standaard `#ffd54a`).
+
+### Tijdbalk en onderbalk
+
+Het klok-icoontje opent een tijdbalk waarmee je tot 12 uur terug kunt in stappen van 15 minuten. Ernaast zit een afspeelknop die de dag versneld doorloopt (de zon beweegt zichtbaar over de panelen) en een knop om naar het begin van het bereik te springen. Na 30 seconden zonder interactie keert de weergave automatisch terug naar live.
+
+Een optionele onderbalk toont het weer, de verwachte opbrengst en het actuele totaal. Standaard uit; de balk verschijnt alleen als je minstens een van deze instelt:
+
+```yaml
+type: custom:solar-layout-card
+weather_entity: weather.home
+forecast_entity: sensor.solcast_pv_forecast_forecast_now   # of Forecast.Solar
+# total_entity: sensor.pv_totaal   # optioneel; anders automatisch opgeteld
+# show_total: true                 # standaard
+```
+
+Het totaal telt elke unieke sensor een keer, zodat panelen die dezelfde sensor delen niet dubbel geteld worden.
 
 ### Stylen met card-mod
 

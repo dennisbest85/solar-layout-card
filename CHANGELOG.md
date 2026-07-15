@@ -4,6 +4,11 @@ Alle noemenswaardige wijzigingen aan deze card worden hier bijgehouden.
 Formaat volgt [Keep a Changelog](https://keepachangelog.com/) en
 [Semantic Versioning](https://semver.org/).
 
+## [1.3.0] - 2026-07-12
+### Toegevoegd
+- Uitgebreide tijdbalk: naast de schuif zit nu een afspeelknop die de dag versneld doorloopt (de zon beweegt zichtbaar over de panelen) en een knop om terug te gaan naar het begin van het bereik. Het label toont nu de kloktijd van het gekozen moment (bijvoorbeeld 13:00) in plaats van hoe lang geleden.
+- Onderbalk met weer, verwachte opbrengst en actueel totaal. Volledig configureerbaar en standaard uit; de balk verschijnt alleen als je er iets voor instelt. Nieuwe opties: `weather_entity` (weer-entity), `forecast_entity` (bijvoorbeeld een Forecast.Solar- of Solcast-sensor met de verwachte opbrengst), `total_entity` (eigen totaal-sensor) en `show_total` (standaard aan). Zonder `total_entity` wordt het totaal automatisch berekend als de som van de unieke paneel-sensoren, zodat panelen die dezelfde sensor delen maar een keer meetellen.
+
 ## [1.2.0] - 2026-07-12
 ### Toegevoegd
 - Ondersteuning voor card-mod (github.com/thomasloven/lovelace-card-mod). Je kunt de card nu herstijlen met de gebruikelijke `card_mod:`- of `style:`-YAML, bijvoorbeeld om de rand, achtergrond of schaduw aan te passen. De styling wordt na elke hertekening opnieuw toegepast, zodat hij niet verdwijnt wanneer de sensorwaarden updaten. Zonder card-mod geinstalleerd verandert er niets.

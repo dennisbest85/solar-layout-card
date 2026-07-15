@@ -1,5 +1,5 @@
-/*! solar-layout-card v1.2.0 | MIT License */
-const VERSION = "1.2.0";
+/*! solar-layout-card v1.3.0 | MIT License */
+const VERSION = "1.3.0";
 
 /* ---------- i18n ----------
  * Follows Home Assistant's UI language (hass.language). Supported: nl, de, en.
@@ -20,6 +20,11 @@ const TRANSLATIONS = {
     time_ago: "{h}h {m}m ago",
     time_now: "Now (live)",
     time_no_history: "no history",
+    play: "Play the day",
+    pause: "Pause",
+    rewind: "Back to start",
+    total: "Now",
+    forecast: "Expected",
     // editor - fields
     f_title: "Title",
     f_reference: "Default Wp for new panels (colour scale is per panel)",
@@ -82,6 +87,11 @@ const TRANSLATIONS = {
     time_ago: "{h}u {m}m geleden",
     time_now: "Nu (live)",
     time_no_history: "geen historie",
+    play: "Dag afspelen",
+    pause: "Pauze",
+    rewind: "Terug naar begin",
+    total: "Nu",
+    forecast: "Verwacht",
     f_title: "Titel",
     f_reference: "Standaard Wp voor nieuwe panelen (kleurschaal is per paneel)",
     f_color_off: "Kleur uit / geen zon",
@@ -139,6 +149,11 @@ const TRANSLATIONS = {
     time_ago: "vor {h}h {m}m",
     time_now: "Jetzt (live)",
     time_no_history: "kein Verlauf",
+    play: "Tag abspielen",
+    pause: "Pause",
+    rewind: "Zum Anfang",
+    total: "Jetzt",
+    forecast: "Erwartet",
     f_title: "Titel",
     f_reference: "Standard-Wp für neue Module (Farbskala ist pro Modul)",
     f_color_off: "Farbe aus / keine Sonne",
@@ -205,6 +220,25 @@ const EDITOR_TAG = "solar-layout-card-editor";
 const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
 // Escape a string for safe use inside a double-quoted attribute selector.
 const cssEsc = (s) => String(s == null ? "" : s).replace(/(["\\])/g, "\\$1");
+// Map Home Assistant weather states to MDI icon names for the footer bar
+// (rendered via <ha-icon>, which is always available in Lovelace).
+const WEATHER_ICONS = {
+  "clear-night": "mdi:weather-night",
+  "cloudy": "mdi:weather-cloudy",
+  "fog": "mdi:weather-fog",
+  "hail": "mdi:weather-hail",
+  "lightning": "mdi:weather-lightning",
+  "lightning-rainy": "mdi:weather-lightning-rainy",
+  "partlycloudy": "mdi:weather-partly-cloudy",
+  "pouring": "mdi:weather-pouring",
+  "rainy": "mdi:weather-rainy",
+  "snowy": "mdi:weather-snowy",
+  "snowy-rainy": "mdi:weather-snowy-rainy",
+  "sunny": "mdi:weather-sunny",
+  "windy": "mdi:weather-windy",
+  "windy-variant": "mdi:weather-windy-variant",
+  "exceptional": "mdi:alert",
+};
 const uid = () => Math.random().toString(36).slice(2, 9);
 
 function fmt(hass, entity) {
@@ -356,6 +390,13 @@ function normalizeConfig(config) {
   };
   // Preserve card-mod styling config so it survives normalisation. card-mod
   // reads either `card_mod:` (object) or a bare `style:` string.
+  // footer bar (weather / forecast / total). Everything off by default;
+  // the bar only shows when at least one of these is configured.
+  if (config.weather_entity) base.weather_entity = String(config.weather_entity);
+  if (config.forecast_entity) base.forecast_entity = String(config.forecast_entity);
+  if (config.total_entity) base.total_entity = String(config.total_entity);
+  // show the auto-summed total (unique sensors) unless explicitly disabled
+  base.show_total = config.show_total !== false;
   if (config.card_mod != null) base.card_mod = config.card_mod;
   if (config.style != null) base.style = config.style;
   const ref = base.reference;
@@ -434,6 +475,10 @@ function serializeConfig(cfg) {
   if (cfg.inv_hide_image) out.inv_hide_image = true;
   if (cfg.flow_dots === false) out.flow_dots = false;
   // Keep any card-mod styling the user set, so editing in the UI doesn't drop it.
+  if (cfg.weather_entity) out.weather_entity = cfg.weather_entity;
+  if (cfg.forecast_entity) out.forecast_entity = cfg.forecast_entity;
+  if (cfg.total_entity) out.total_entity = cfg.total_entity;
+  if (cfg.show_total === false) out.show_total = false;
   if (cfg.card_mod != null) out.card_mod = cfg.card_mod;
   if (cfg.style != null) out.style = cfg.style;
 
@@ -488,6 +533,8 @@ class SolarLayoutCard extends HTMLElement {
     this._historyToken = 0;         // guards against stale async fetches
     this._autoReturnTimer = null;   // 30s inactivity -> back to live
     this._sliderDragging = false;   // true while the time slider is grabbed
+    this._playing = false;          // day-playback running
+    this._playTimer = null;         // interval id for playback
   }
 
   // Minutes of history the slider can reach back (12h) and the step size.
@@ -678,6 +725,99 @@ class SolarLayoutCard extends HTMLElement {
 
   disconnectedCallback() {
     if (this._autoReturnTimer) clearTimeout(this._autoReturnTimer);
+    this._stopPlayback();
+  }
+
+  /* ---- footer bar (weather / forecast / total) ---- */
+
+  // Sum of the current output across unique panel sensors, honouring the
+  // selected time. Sensors shared by several panels are counted once, so a
+  // "total divided across panels" setup doesn't get multiplied back up.
+  _computeTotal(hass) {
+    if (this._config.total_entity) {
+      const st = this._stateAt(hass, this._config.total_entity);
+      const n = st ? Number(st.state) : NaN;
+      return Number.isFinite(n) ? n : null;
+    }
+    const layout = this._layout();
+    const seen = new Set();
+    let sum = 0;
+    let any = false;
+    for (const p of layout.panels) {
+      if (!p.entity || seen.has(p.entity)) continue;
+      seen.add(p.entity);
+      const st = this._stateAt(hass, p.entity);
+      const n = st ? Number(st.state) : NaN;
+      if (Number.isFinite(n)) { sum += n; any = true; }
+    }
+    return any ? sum : null;
+  }
+
+  // Build the footer bar HTML, or "" when nothing is configured to show.
+  _footerHtml(hass) {
+    if (!hass) return "";
+    const cfg = this._config;
+    const parts = [];
+    // weather
+    if (cfg.weather_entity) {
+      const w = hass.states[cfg.weather_entity];
+      if (w) {
+        const icon = WEATHER_ICONS[w.state] || "mdi:weather-cloudy";
+        parts.push(`<span class="fitem"><ha-icon icon="${icon}"></ha-icon> ${w.state}</span>`);
+      }
+    }
+    // forecast (expected)
+    if (cfg.forecast_entity) {
+      const f = hass.states[cfg.forecast_entity];
+      if (f) {
+        const unit = f.attributes && f.attributes.unit_of_measurement ? f.attributes.unit_of_measurement : "";
+        const n = Number(f.state);
+        const val = Number.isFinite(n) ? n.toLocaleString(undefined, { maximumFractionDigits: 2 }) : f.state;
+        parts.push(`<span class="fitem muted">${t(hass, "forecast")} ${val} ${unit}</span>`);
+      }
+    }
+    // total (auto-sum or total_entity)
+    if (cfg.show_total !== false || cfg.total_entity) {
+      const tot = this._computeTotal(hass);
+      if (tot != null) {
+        parts.push(`<span class="fitem total"><ha-icon icon="mdi:sigma"></ha-icon> ${t(hass, "total")} ${Math.round(tot).toLocaleString()} W</span>`);
+      }
+    }
+    if (!parts.length) return "";
+    return `<div class="footerbar">${parts.join("")}</div>`;
+  }
+
+  /* ---- day playback ---- */
+
+  _startPlayback() {
+    if (this._playing) return;
+    this._playing = true;
+    if (this._autoReturnTimer) clearTimeout(this._autoReturnTimer); // no auto-return while playing
+    // Step from the current offset toward live (0), one step per tick.
+    const stepMin = SolarLayoutCard.TIME_STEP_MIN;
+    const tickMs = 700; // ~0.7s per 15-min step: a full 12h in ~35s
+    this._playTimer = setInterval(() => {
+      if (this._timeOffset <= 0) { this._stopPlayback(); this._render(); return; }
+      this._timeOffset = Math.max(0, this._timeOffset - stepMin);
+      this._render();
+    }, tickMs);
+    this._render();
+  }
+
+  _stopPlayback() {
+    if (this._playTimer) clearInterval(this._playTimer);
+    this._playTimer = null;
+    this._playing = false;
+  }
+
+  _togglePlayback() {
+    if (this._playing) { this._stopPlayback(); this._armAutoReturn(); this._render(); }
+    else {
+      // if we're at live, jump back to the start of the range so there's
+      // something to play through
+      if (this._timeOffset <= 0) this._timeOffset = SolarLayoutCard.TIME_MAX_MIN;
+      this._startPlayback();
+    }
   }
 
   // Hand our config to card-mod (github.com/thomasloven/lovelace-card-mod) so
@@ -906,19 +1046,27 @@ class SolarLayoutCard extends HTMLElement {
     if (this._timeOffset === 0) {
       timeLabel = t(hass, "time_now");
     } else {
-      const h = Math.floor(this._timeOffset / 60);
-      const m = this._timeOffset % 60;
-      timeLabel = t(hass, "time_ago").replace("{h}", h).replace("{m}", m);
+      // show the actual clock time of the selected moment, e.g. "13:00"
+      const d = new Date(this._targetTime());
+      const hh = String(d.getHours()).padStart(2, "0");
+      const mm = String(d.getMinutes()).padStart(2, "0");
+      timeLabel = `${hh}:${mm}`;
     }
     const clockActive = this._timeSliderOpen ? "active" : "";
     const liveActive = this._timeOffset === 0 ? "live-on" : "";
+    // play/pause glyph: ▶ when stopped, ❚❚ when playing
+    const playGlyph = this._playing ? "&#10074;&#10074;" : "&#9654;";
+    const playTitle = this._playing ? t(hass, "pause") : t(hass, "play");
     const sliderRow = this._timeSliderOpen
       ? `<div class="timebar">
+           <button class="tbtn rewind" title="${t(hass, "rewind")}" aria-label="${t(hass, "rewind")}">&#9198;</button>
+           <button class="tbtn play ${this._playing ? "on" : ""}" title="${playTitle}" aria-label="${playTitle}">${playGlyph}</button>
            <input class="timeslider" type="range" min="0" max="${tMax}" step="${tStep}"
                   value="${sliderVal}" aria-label="${t(hass, "time_toggle")}" />
            <span class="timelabel ${liveActive}">${timeLabel}</span>
          </div>`
       : "";
+    const footerHtml = this._footerHtml(hass);
 
     this.shadowRoot.innerHTML = `
       <style>${SolarLayoutCard.styles(cols, rows, zoom, fontScale)}</style>
@@ -942,6 +1090,7 @@ class SolarLayoutCard extends HTMLElement {
             ${(panelsHtml + invertersHtml) || `<div class="empty">${t(hass, "empty_no_panels")}</div>`}
           </div>
         </div>
+        ${footerHtml}
       </ha-card>
     `;
 
@@ -1002,9 +1151,30 @@ class SolarLayoutCard extends HTMLElement {
           this._fetchHistory();   // load 12h of history when opening
           this._armAutoReturn();
         } else {
+          this._stopPlayback();
           this._timeOffset = 0;   // closing returns to live
           if (this._autoReturnTimer) clearTimeout(this._autoReturnTimer);
         }
+        this._render();
+      });
+    }
+
+    // play / pause the day, and rewind to the start of the range
+    const playBtn = this.shadowRoot.querySelector(".tbtn.play");
+    if (playBtn) {
+      playBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (!this._history || !Object.keys(this._history).length) this._fetchHistory();
+        this._togglePlayback();
+      });
+    }
+    const rewindBtn = this.shadowRoot.querySelector(".tbtn.rewind");
+    if (rewindBtn) {
+      rewindBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this._timeOffset = SolarLayoutCard.TIME_MAX_MIN;
+        if (!this._history || !Object.keys(this._history).length) this._fetchHistory();
+        if (!this._playing) this._armAutoReturn();
         this._render();
       });
     }
@@ -1177,6 +1347,29 @@ class SolarLayoutCard extends HTMLElement {
         display: flex; align-items: center; gap: 10px;
         padding: 2px 4px 10px;
       }
+      .tbtn {
+        width: 26px; height: 26px; border-radius: 6px; cursor: pointer; flex: none;
+        border: 1px solid var(--divider-color, #ccc);
+        background: var(--card-background-color, #fff);
+        color: var(--primary-text-color); font-size: .8rem; line-height: 1;
+        display: inline-flex; align-items: center; justify-content: center;
+      }
+      .tbtn:hover { filter: brightness(0.95); }
+      .tbtn.play.on {
+        background: var(--primary-color, #2b7cff);
+        border-color: var(--primary-color, #2b7cff);
+        color: var(--text-primary-color, #fff);
+      }
+      .footerbar {
+        display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+        margin-top: 8px; padding-top: 8px;
+        border-top: 1px solid var(--divider-color, rgba(255,255,255,0.08));
+        font-size: .8rem; color: var(--secondary-text-color);
+      }
+      .footerbar .fitem { display: inline-flex; align-items: center; gap: 5px; }
+      .footerbar ha-icon { --mdc-icon-size: 16px; width: 16px; height: 16px; }
+      .footerbar .fitem.muted { color: var(--secondary-text-color); }
+      .footerbar .fitem.total { margin-left: auto; color: var(--primary-text-color); font-weight: 600; }
       .timeslider {
         flex: 1; accent-color: var(--primary-color, #2b7cff);
         cursor: pointer; height: 4px;
