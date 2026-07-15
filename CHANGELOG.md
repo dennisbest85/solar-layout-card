@@ -4,6 +4,10 @@ Alle noemenswaardige wijzigingen aan deze card worden hier bijgehouden.
 Formaat volgt [Keep a Changelog](https://keepachangelog.com/) en
 [Semantic Versioning](https://semver.org/).
 
+## [1.3.2] - 2026-07-15
+### Opgelost
+- De weertoestand in de onderbalk werd altijd in het Engels getoond (bijvoorbeeld "Sunny"). De weertoestanden lopen nu mee met de taal van Home Assistant (Nederlands, Duits, Engels; anders Engels), net als de rest van de card.
+
 ## [1.3.1] - 2026-07-15
 ### Toegevoegd
 - Afspeelsnelheid voor de tijdbalk: knoppen 1x, 2x en 4x naast de afspeelknop. De basissnelheid is ook iets vlotter gemaakt.

@@ -1,5 +1,5 @@
-/*! solar-layout-card v1.3.1 | MIT License */
-const VERSION = "1.3.1";
+/*! solar-layout-card v1.3.2 | MIT License */
+const VERSION = "1.3.2";
 
 /* ---------- i18n ----------
  * Follows Home Assistant's UI language (hass.language). Supported: nl, de, en.
@@ -257,6 +257,37 @@ const WEATHER_ICONS = {
   "windy-variant": "mdi:weather-windy-variant",
   "exceptional": "mdi:alert",
 };
+// Localised labels for weather conditions (the raw hass state is English).
+const WEATHER_LABELS = {
+  en: {
+    "clear-night": "Clear", "cloudy": "Cloudy", "fog": "Fog", "hail": "Hail",
+    "lightning": "Lightning", "lightning-rainy": "Thunderstorm",
+    "partlycloudy": "Partly cloudy", "pouring": "Pouring", "rainy": "Rainy",
+    "snowy": "Snowy", "snowy-rainy": "Sleet", "sunny": "Sunny",
+    "windy": "Windy", "windy-variant": "Windy", "exceptional": "Exceptional",
+  },
+  nl: {
+    "clear-night": "Helder", "cloudy": "Bewolkt", "fog": "Mist", "hail": "Hagel",
+    "lightning": "Onweer", "lightning-rainy": "Onweer met regen",
+    "partlycloudy": "Half bewolkt", "pouring": "Stortregen", "rainy": "Regen",
+    "snowy": "Sneeuw", "snowy-rainy": "Natte sneeuw", "sunny": "Zonnig",
+    "windy": "Winderig", "windy-variant": "Winderig", "exceptional": "Uitzonderlijk",
+  },
+  de: {
+    "clear-night": "Klar", "cloudy": "Bewölkt", "fog": "Nebel", "hail": "Hagel",
+    "lightning": "Gewitter", "lightning-rainy": "Gewitter mit Regen",
+    "partlycloudy": "Teils bewölkt", "pouring": "Starkregen", "rainy": "Regen",
+    "snowy": "Schnee", "snowy-rainy": "Schneeregen", "sunny": "Sonnig",
+    "windy": "Windig", "windy-variant": "Windig", "exceptional": "Außergewöhnlich",
+  },
+};
+// Translate a weather state to the hass language, falling back to English,
+// then to the raw state if unknown.
+function weatherLabel(hass, state) {
+  const l = langOf(hass);
+  return (WEATHER_LABELS[l] && WEATHER_LABELS[l][state]) ||
+         WEATHER_LABELS.en[state] || state;
+}
 const uid = () => Math.random().toString(36).slice(2, 9);
 
 function fmt(hass, entity) {
@@ -782,7 +813,8 @@ class SolarLayoutCard extends HTMLElement {
       const w = hass.states[cfg.weather_entity];
       if (w) {
         const icon = WEATHER_ICONS[w.state] || "mdi:weather-cloudy";
-        parts.push(`<span class="fitem"><ha-icon icon="${icon}"></ha-icon> ${w.state}</span>`);
+        const wlabel = weatherLabel(hass, w.state);
+        parts.push(`<span class="fitem"><ha-icon icon="${icon}"></ha-icon> ${wlabel}</span>`);
       }
     }
     // forecast (expected)
