@@ -1,5 +1,5 @@
-/*! solar-layout-card v1.3.0 | MIT License */
-const VERSION = "1.3.0";
+/*! solar-layout-card v1.3.1 | MIT License */
+const VERSION = "1.3.1";
 
 /* ---------- i18n ----------
  * Follows Home Assistant's UI language (hass.language). Supported: nl, de, en.
@@ -36,6 +36,12 @@ const TRANSLATIONS = {
     hide_image: "Hide image",
     hide_label: "Hide label",
     hide_sensor: "Hide sensor",
+    footer_section: "Footer bar (weather, forecast, total)",
+    f_weather: "Weather entity",
+    f_forecast: "Forecast entity (expected output)",
+    f_total: "Total entity (leave empty to auto-sum)",
+    f_show_total: "Show total",
+    ent_none: "(none)",
     // editor - lines / connections
     curved_line: "Curved line",
     flow_dots: "Moving dots",
@@ -102,6 +108,12 @@ const TRANSLATIONS = {
     hide_image: "Afbeelding verbergen",
     hide_label: "Label verbergen",
     hide_sensor: "Sensor verbergen",
+    footer_section: "Onderbalk (weer, voorspelling, totaal)",
+    f_weather: "Weer-entity",
+    f_forecast: "Voorspelling-entity (verwachte opbrengst)",
+    f_total: "Totaal-entity (leeg = automatisch optellen)",
+    f_show_total: "Totaal tonen",
+    ent_none: "(geen)",
     curved_line: "Gebogen lijn",
     flow_dots: "Bewegende bolletjes",
     draw_conn: "Verbindingen tekenen",
@@ -164,6 +176,12 @@ const TRANSLATIONS = {
     hide_image: "Bild ausblenden",
     hide_label: "Bezeichnung ausblenden",
     hide_sensor: "Sensor ausblenden",
+    footer_section: "Fußzeile (Wetter, Prognose, Summe)",
+    f_weather: "Wetter-Entität",
+    f_forecast: "Prognose-Entität (erwarteter Ertrag)",
+    f_total: "Summen-Entität (leer = automatisch)",
+    f_show_total: "Summe anzeigen",
+    ent_none: "(keine)",
     curved_line: "Gebogene Linie",
     flow_dots: "Bewegte Punkte",
     draw_conn: "Verbindungen zeichnen",
@@ -535,6 +553,7 @@ class SolarLayoutCard extends HTMLElement {
     this._sliderDragging = false;   // true while the time slider is grabbed
     this._playing = false;          // day-playback running
     this._playTimer = null;         // interval id for playback
+    this._playSpeed = 1;            // playback speed multiplier (1x / 2x / 4x)
   }
 
   // Minutes of history the slider can reach back (12h) and the step size.
@@ -795,7 +814,8 @@ class SolarLayoutCard extends HTMLElement {
     if (this._autoReturnTimer) clearTimeout(this._autoReturnTimer); // no auto-return while playing
     // Step from the current offset toward live (0), one step per tick.
     const stepMin = SolarLayoutCard.TIME_STEP_MIN;
-    const tickMs = 700; // ~0.7s per 15-min step: a full 12h in ~35s
+    // Base tick ~480ms (1x ≈ 24s for a full 12h); higher speeds divide it.
+    const tickMs = Math.max(60, 480 / (this._playSpeed || 1));
     this._playTimer = setInterval(() => {
       if (this._timeOffset <= 0) { this._stopPlayback(); this._render(); return; }
       this._timeOffset = Math.max(0, this._timeOffset - stepMin);
@@ -817,6 +837,19 @@ class SolarLayoutCard extends HTMLElement {
       // something to play through
       if (this._timeOffset <= 0) this._timeOffset = SolarLayoutCard.TIME_MAX_MIN;
       this._startPlayback();
+    }
+  }
+
+  // Change playback speed. If currently playing, restart the interval so the
+  // new speed takes effect immediately.
+  _setPlaySpeed(mult) {
+    this._playSpeed = mult;
+    if (this._playing) {
+      this._stopPlayback();
+      this._playing = false;
+      this._startPlayback();
+    } else {
+      this._render();
     }
   }
 
@@ -1061,6 +1094,9 @@ class SolarLayoutCard extends HTMLElement {
       ? `<div class="timebar">
            <button class="tbtn rewind" title="${t(hass, "rewind")}" aria-label="${t(hass, "rewind")}">&#9198;</button>
            <button class="tbtn play ${this._playing ? "on" : ""}" title="${playTitle}" aria-label="${playTitle}">${playGlyph}</button>
+           <span class="speeds">
+             ${[1, 2, 4].map((s) => `<button class="spd ${this._playSpeed === s ? "on" : ""}" data-spd="${s}">${s}&#215;</button>`).join("")}
+           </span>
            <input class="timeslider" type="range" min="0" max="${tMax}" step="${tStep}"
                   value="${sliderVal}" aria-label="${t(hass, "time_toggle")}" />
            <span class="timelabel ${liveActive}">${timeLabel}</span>
@@ -1178,6 +1214,13 @@ class SolarLayoutCard extends HTMLElement {
         this._render();
       });
     }
+    this.shadowRoot.querySelectorAll(".spd").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const s = Number(btn.getAttribute("data-spd")) || 1;
+        this._setPlaySpeed(s);
+      });
+    });
 
     // time slider: value is "minutes since 12h ago", so right = now.
     const slider = this.shadowRoot.querySelector(".timeslider");
@@ -1356,6 +1399,20 @@ class SolarLayoutCard extends HTMLElement {
       }
       .tbtn:hover { filter: brightness(0.95); }
       .tbtn.play.on {
+        background: var(--primary-color, #2b7cff);
+        border-color: var(--primary-color, #2b7cff);
+        color: var(--text-primary-color, #fff);
+      }
+      .speeds { display: inline-flex; gap: 3px; flex: none; }
+      .spd {
+        min-width: 26px; height: 26px; border-radius: 6px; cursor: pointer;
+        border: 1px solid var(--divider-color, #ccc);
+        background: var(--card-background-color, #fff);
+        color: var(--secondary-text-color); font-size: .72rem; line-height: 1;
+        padding: 0 5px;
+      }
+      .spd:hover { filter: brightness(0.95); }
+      .spd.on {
         background: var(--primary-color, #2b7cff);
         border-color: var(--primary-color, #2b7cff);
         color: var(--text-primary-color, #fff);
@@ -1700,6 +1757,16 @@ class SolarLayoutCardEditor extends HTMLElement {
           </div>
         </div>
 
+        <div class="field">
+          <label>${_t("footer_section")}</label>
+          <input id="weather_entity" type="text" list="slc-weather" placeholder="${_t("f_weather")}" />
+          <input id="forecast_entity" type="text" list="slc-entities" placeholder="${_t("f_forecast")}" style="margin-top:6px;" />
+          <input id="total_entity" type="text" list="slc-entities" placeholder="${_t("f_total")}" style="margin-top:6px;" />
+          <label class="chk" style="margin-top:6px;"><input id="show_total" type="checkbox" /> ${_t("f_show_total")}</label>
+          <datalist id="slc-entities"></datalist>
+          <datalist id="slc-weather"></datalist>
+        </div>
+
         <div class="canvaswrap">
           <div id="layouttabs" class="ltabs"></div>
           <div class="connbar">
@@ -1777,6 +1844,25 @@ class SolarLayoutCardEditor extends HTMLElement {
     hLbl.addEventListener("change", (e) => { this._config.inv_hide_label = e.target.checked; this._emit(); });
     hSen.addEventListener("change", (e) => { this._config.inv_hide_sensor = e.target.checked; this._emit(); });
     fDots.addEventListener("change", (e) => { this._config.flow_dots = e.target.checked; this._emit(); });
+
+    // footer bar fields
+    const wEnt = sr.getElementById("weather_entity");
+    const fEnt = sr.getElementById("forecast_entity");
+    const tEnt = sr.getElementById("total_entity");
+    const showTot = sr.getElementById("show_total");
+    if (wEnt) wEnt.value = this._config.weather_entity || "";
+    if (fEnt) fEnt.value = this._config.forecast_entity || "";
+    if (tEnt) tEnt.value = this._config.total_entity || "";
+    if (showTot) showTot.checked = this._config.show_total !== false;
+    const setEnt = (key, el) => {
+      const v = el.value.trim();
+      if (v) this._config[key] = v; else delete this._config[key];
+      this._emit();
+    };
+    if (wEnt) wEnt.addEventListener("input", () => setEnt("weather_entity", wEnt));
+    if (fEnt) fEnt.addEventListener("input", () => setEnt("forecast_entity", fEnt));
+    if (tEnt) tEnt.addEventListener("input", () => setEnt("total_entity", tEnt));
+    if (showTot) showTot.addEventListener("change", (e) => { this._config.show_total = e.target.checked; this._emit(); });
 
     sr.getElementById("add").addEventListener("click", () => this._addPanel());
     sr.getElementById("addinv").addEventListener("click", () => this._addInverter());
@@ -2235,9 +2321,19 @@ class SolarLayoutCardEditor extends HTMLElement {
     const entities = this._entityList();
     if (!entities.length) return;
     const opts = entities.map((e) => `<option value="${e}"></option>`).join("");
-    this.shadowRoot.querySelectorAll(".prow datalist, .irow datalist").forEach((dl) => {
+    this.shadowRoot.querySelectorAll(".prow datalist, .irow datalist, #slc-entities").forEach((dl) => {
       dl.innerHTML = opts;
     });
+    // weather picker gets weather.* entities
+    if (this._hass) {
+      const wOpts = Object.keys(this._hass.states)
+        .filter((e) => e.startsWith("weather."))
+        .sort()
+        .map((e) => `<option value="${e}"></option>`)
+        .join("");
+      const wdl = this.shadowRoot.querySelector("#slc-weather");
+      if (wdl) wdl.innerHTML = wOpts;
+    }
     this._entitiesFilled = true;
   }
 

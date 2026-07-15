@@ -4,6 +4,11 @@ Alle noemenswaardige wijzigingen aan deze card worden hier bijgehouden.
 Formaat volgt [Keep a Changelog](https://keepachangelog.com/) en
 [Semantic Versioning](https://semver.org/).
 
+## [1.3.1] - 2026-07-15
+### Toegevoegd
+- Afspeelsnelheid voor de tijdbalk: knoppen 1x, 2x en 4x naast de afspeelknop. De basissnelheid is ook iets vlotter gemaakt.
+- Editor-velden voor de onderbalk. Weer-, voorspelling- en totaal-entity zijn nu in de visuele editor in te stellen (voorheen alleen via YAML), met een "Totaal tonen"-checkbox. De onderbalk verschijnt automatisch zodra je een entity invult.
+
 ## [1.3.0] - 2026-07-12
 ### Toegevoegd
 - Uitgebreide tijdbalk: naast de schuif zit nu een afspeelknop die de dag versneld doorloopt (de zon beweegt zichtbaar over de panelen) en een knop om terug te gaan naar het begin van het bereik. Het label toont nu de kloktijd van het gekozen moment (bijvoorbeeld 13:00) in plaats van hoe lang geleden.
