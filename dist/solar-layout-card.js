@@ -1,5 +1,5 @@
-/*! solar-layout-card v1.3.2 | MIT License */
-const VERSION = "1.3.2";
+/*! solar-layout-card v1.3.3 | MIT License */
+const VERSION = "1.3.3";
 
 /* ---------- i18n ----------
  * Follows Home Assistant's UI language (hass.language). Supported: nl, de, en.
@@ -238,6 +238,12 @@ const EDITOR_TAG = "solar-layout-card-editor";
 const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
 // Escape a string for safe use inside a double-quoted attribute selector.
 const cssEsc = (s) => String(s == null ? "" : s).replace(/(["\\])/g, "\\$1");
+// Escape a string for safe interpolation into innerHTML templates. Sensor
+// state/attributes and user-authored labels are never trusted as markup.
+const escHtml = (s) =>
+  String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  })[c]);
 // Map Home Assistant weather states to MDI icon names for the footer bar
 // (rendered via <ha-icon>, which is always available in Lovelace).
 const WEATHER_ICONS = {
@@ -814,7 +820,7 @@ class SolarLayoutCard extends HTMLElement {
       if (w) {
         const icon = WEATHER_ICONS[w.state] || "mdi:weather-cloudy";
         const wlabel = weatherLabel(hass, w.state);
-        parts.push(`<span class="fitem"><ha-icon icon="${icon}"></ha-icon> ${wlabel}</span>`);
+        parts.push(`<span class="fitem"><ha-icon icon="${icon}"></ha-icon> ${escHtml(wlabel)}</span>`);
       }
     }
     // forecast (expected)
@@ -824,7 +830,7 @@ class SolarLayoutCard extends HTMLElement {
         const unit = f.attributes && f.attributes.unit_of_measurement ? f.attributes.unit_of_measurement : "";
         const n = Number(f.state);
         const val = Number.isFinite(n) ? n.toLocaleString(undefined, { maximumFractionDigits: 2 }) : f.state;
-        parts.push(`<span class="fitem muted">${t(hass, "forecast")} ${val} ${unit}</span>`);
+        parts.push(`<span class="fitem muted">${t(hass, "forecast")} ${escHtml(val)} ${escHtml(unit)}</span>`);
       }
     }
     // total (auto-sum or total_entity)
@@ -993,10 +999,10 @@ class SolarLayoutCard extends HTMLElement {
                data-entity="${p.entity}">
             <div class="cells"></div>
             <div class="reading">
-              <span class="value">${val}</span>
-              <span class="unit">${unit}</span>
+              <span class="value">${escHtml(val)}</span>
+              <span class="unit">${escHtml(unit)}</span>
             </div>
-            ${p.label ? `<div class="plabel">${p.label}</div>` : ""}
+            ${p.label ? `<div class="plabel">${escHtml(p.label)}</div>` : ""}
             ${warn ? `<div class="warn" title="${t(hass, "warn_zero_day")}">!</div>` : ""}
           </div>`;
       })
@@ -1010,11 +1016,11 @@ class SolarLayoutCard extends HTMLElement {
         const hasState = hasStateAt(v.entity);
         const num = numAt(v.entity);
         const showReading = !hideSensor && hasState;
-        const reading = showReading ? `<div class="inv-reading">${val} ${unit}</div>` : "";
+        const reading = showReading ? `<div class="inv-reading">${escHtml(val)} ${escHtml(unit)}</div>` : "";
         const image = hideImage
           ? ""
-          : `<img class="inv-img" src="${invImg(v)}" alt="${brand.name}" />`;
-        const labelHtml = (!hideLabel && v.label) ? `<div class="inv-label">${v.label}</div>` : "";
+          : `<img class="inv-img" src="${invImg(v)}" alt="${escHtml(brand.name)}" />`;
+        const labelHtml = (!hideLabel && v.label) ? `<div class="inv-label">${escHtml(v.label)}</div>` : "";
         // brand name only shown as fallback when image is hidden
         const brandHtml = hideImage ? `<div class="inv-brand">${brand.name}</div>` : "";
         // Sleep badge: mirror of the panel "!" warning. Show a Zzz when the sun
@@ -1140,7 +1146,7 @@ class SolarLayoutCard extends HTMLElement {
       <style>${SolarLayoutCard.styles(cols, rows, zoom, fontScale)}</style>
       <ha-card>
         <div class="topbar">
-          ${this._config.title ? `<div class="header">${this._config.title}</div>` : `<span></span>`}
+          ${this._config.title ? `<div class="header">${escHtml(this._config.title)}</div>` : `<span></span>`}
           <div class="tools">
             <button class="clockbtn ${clockActive}" title="${t(hass, "time_toggle")}" aria-label="${t(hass, "time_toggle")}">&#x1F551;</button>
             <div class="zoombar" title="${t(hass, "zoom")}">
@@ -2135,7 +2141,7 @@ class SolarLayoutCardEditor extends HTMLElement {
     el.style.top = p.y * GRID + "px";
     el.style.width = w * GRID + "px";
     el.style.height = h * GRID + "px";
-    el.innerHTML = `<span class="tag">${p.label || ""}</span>`;
+    el.innerHTML = `<span class="tag">${escHtml(p.label || "")}</span>`;
     this._attachDrag(el);
     this._attachConnectClick(el);
     return el;

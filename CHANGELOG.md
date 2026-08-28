@@ -4,6 +4,12 @@ Alle noemenswaardige wijzigingen aan deze card worden hier bijgehouden.
 Formaat volgt [Keep a Changelog](https://keepachangelog.com/) en
 [Semantic Versioning](https://semver.org/).
 
+## [1.3.3] - 2026-08-28
+### Beveiliging
+- Sensorwaarden, eenheden en de weertoestand in de onderbalk, en paneel-/omvormerlabels werden ongeëscaped in de HTML van de card geplaatst. Een sensor met opmaak in de state of `unit_of_measurement` (bijvoorbeeld een REST-, scrape- of MQTT-sensor die externe of LAN-data doorgeeft) kon daardoor script laten uitvoeren in het dashboard. Deze waarden worden nu ge-escaped voordat ze in de template terechtkomen.
+### Overig
+- De ongebruikte PNG-afbeeldingen in `dist/microinverters/` (samen ca. 279 KB) zijn verwijderd; de microinverter-iconen worden al als ingebouwde base64-afbeeldingen getekend en gebruikten deze bestanden niet.
+
 ## [1.3.2] - 2026-07-15
 ### Opgelost
 - De weertoestand in de onderbalk werd altijd in het Engels getoond (bijvoorbeeld "Sunny"). De weertoestanden lopen nu mee met de taal van Home Assistant (Nederlands, Duits, Engels; anders Engels), net als de rest van de card.
