@@ -4,6 +4,10 @@ Alle noemenswaardige wijzigingen aan deze card worden hier bijgehouden.
 Formaat volgt [Keep a Changelog](https://keepachangelog.com/) en
 [Semantic Versioning](https://semver.org/).
 
+## [1.5.1] - 2026-09-02
+### Opgelost
+- De paneelkoppeling (`panelId`) en "Toon in beeld" (`badge`) van een omvormer werden bij elke config-load weer weggegooid door een interne functie die omvormers herbouwde met alleen de oude velden. Hierdoor leek de koppeling na het heropenen van de editor verdwenen en had het vinkje voor "in beeld tonen" geen zichtbaar effect. Beide velden worden nu behouden.
+
 ## [1.5.0] - 2026-09-02
 ### Toegevoegd
 - Editor: naast "Koppel aan paneel…" staat nu een "Toon in beeld"-vinkje bij een omvormer/micro-omvormer. Wordt dit aangezet, dan verschijnt de omvormer als klein badge-icoontje rechtsonder in het paneel zelf (met naam/waarde als tooltip) in plaats van als los vak ernaast. Losse bedradingslijnen naar die omvormer worden dan automatisch verwijderd, omdat de omvormer nu bij het paneel hoort.

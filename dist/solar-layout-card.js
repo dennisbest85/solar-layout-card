@@ -1,5 +1,5 @@
-/*! solar-layout-card v1.5.0 | MIT License */
-const VERSION = "1.5.0";
+/*! solar-layout-card v1.5.1 | MIT License */
+const VERSION = "1.5.1";
 
 /* ---------- i18n ----------
  * Follows Home Assistant's UI language (hass.language). Supported: nl, de, en.
@@ -485,6 +485,8 @@ function normalizeConfig(config) {
       brand: brandOk ? v.brand : (micro ? "enphase" : "goodwe"),
       entity: v.entity || "",
       label: v.label || "",
+      panelId: v.panelId || null,
+      badge: !!v.badge,
     };
   };
   const normConn = (c) => ({
