@@ -1,5 +1,5 @@
-/*! solar-layout-card v1.3.3 | MIT License */
-const VERSION = "1.3.3";
+/*! solar-layout-card v1.4.0 | MIT License */
+const VERSION = "1.4.0";
 
 /* ---------- i18n ----------
  * Follows Home Assistant's UI language (hass.language). Supported: nl, de, en.
@@ -80,6 +80,8 @@ const TRANSLATIONS = {
     kind_micro_title: "Micro-inverter",
     kind_inv_title: "Inverter",
     panel_label: "Panel",
+    attach_panel: "Attach to panel…",
+    attach_panel_title: "Place this inverter on/below a panel",
   },
   nl: {
     title_default: "Zonnepanelen",
@@ -148,6 +150,8 @@ const TRANSLATIONS = {
     kind_micro_title: "Micro-omvormer",
     kind_inv_title: "Omvormer",
     panel_label: "Paneel",
+    attach_panel: "Koppel aan paneel…",
+    attach_panel_title: "Plaats deze omvormer op/onder een paneel",
   },
   de: {
     title_default: "Solarmodule",
@@ -216,6 +220,8 @@ const TRANSLATIONS = {
     kind_micro_title: "Mikro-Wechselrichter",
     kind_inv_title: "Wechselrichter",
     panel_label: "Modul",
+    attach_panel: "An Modul anhängen…",
+    attach_panel_title: "Diesen Wechselrichter auf/unter einem Modul platzieren",
   },
 };
 function langOf(hass) {
@@ -2465,6 +2471,25 @@ class SolarLayoutCardEditor extends HTMLElement {
     kind.textContent = v.micro ? t(this._hass, "kind_micro") : t(this._hass, "kind_inv");
     kind.title = v.micro ? t(this._hass, "kind_micro_title") : t(this._hass, "kind_inv_title");
 
+    // Lets you pick which panel this inverter belongs to; it then snaps to
+    // sit just below that panel instead of everything landing on panel 1.
+    const panelSel = document.createElement("select");
+    panelSel.className = "panelsel";
+    panelSel.title = t(this._hass, "attach_panel_title");
+    const fillPanelOptions = () => {
+      const cur = panelSel.value;
+      const opts = [`<option value="">${escHtml(t(this._hass, "attach_panel"))}</option>`].concat(
+        this._panels().map((p) => `<option value="${p.id}">${escHtml(p.label || p.id.slice(0, 4))}</option>`)
+      );
+      panelSel.innerHTML = opts.join("");
+      panelSel.value = v.panelId && this._panel(v.panelId) ? v.panelId : cur;
+    };
+    fillPanelOptions();
+    panelSel.addEventListener("mousedown", fillPanelOptions);
+    panelSel.addEventListener("change", (e) => {
+      if (e.target.value) this._placeOnPanel(v, e.target.value);
+    });
+
     const brand = document.createElement("select");
     brand.className = "brand";
     brand.innerHTML = Object.keys(brandMap)
@@ -2518,7 +2543,7 @@ class SolarLayoutCardEditor extends HTMLElement {
     del.textContent = "✕";
     del.addEventListener("click", () => this._removeInverter(v.id));
 
-    row.append(kind, brand, lbl, ent, datalist, del);
+    row.append(kind, panelSel, brand, lbl, ent, datalist, del);
     return row;
   }
 
@@ -2530,6 +2555,7 @@ class SolarLayoutCardEditor extends HTMLElement {
       brand: micro ? "enphase" : "goodwe",
       entity: "",
       label: "",
+      panelId: null,
     };
     this._inverters().push(v);
     const canvas = this.shadowRoot.getElementById("canvas");
@@ -2543,6 +2569,27 @@ class SolarLayoutCardEditor extends HTMLElement {
       this._entitiesFilled = false;
       this._refreshEntityOptions();
     }
+    this._emit();
+  }
+
+  // Snap an inverter/micro-inverter to sit just below the chosen panel,
+  // nudging down if that spot is already taken by another inverter.
+  _placeOnPanel(v, panelId) {
+    const p = this._panel(panelId);
+    if (!p) return;
+    const pd = this._dims(p);
+    let x = p.x, y = p.y + pd.h;
+    const taken = (x, y) => this._inverters().some((o) => o !== v && o.x === x && o.y === y);
+    while (taken(x, y)) y += 1;
+    v.x = x;
+    v.y = y;
+    v.panelId = panelId;
+    const node = this._canvasNode(v.id);
+    if (node) {
+      node.style.left = x * GRID + "px";
+      node.style.top = y * GRID + "px";
+    }
+    this._applyCanvasSize();
     this._emit();
   }
 
@@ -2721,7 +2768,7 @@ class SolarLayoutCardEditor extends HTMLElement {
       .prow .lbl { width:100%; }
       .prow .wp { width:100%; text-align:right; }
       .prow button { cursor:pointer; }
-      .irow { display:grid; grid-template-columns: 46px 110px 84px 1fr auto; gap:6px; align-items:center; }
+      .irow { display:grid; grid-template-columns: 46px 100px 110px 84px 1fr auto; gap:6px; align-items:center; }
       .irow .ikind {
         font-size:.68rem; text-align:center; padding:2px 0; border-radius:5px;
         background:var(--secondary-background-color,#333); color:var(--secondary-text-color);

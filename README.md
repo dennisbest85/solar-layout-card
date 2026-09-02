@@ -1,7 +1,7 @@
 # Solar Layout Card
 
 ![hacs](https://img.shields.io/badge/HACS-Dashboard-41BDF5.svg)
-![version](https://img.shields.io/badge/version-1.3.2-f4c40f.svg)
+![version](https://img.shields.io/badge/version-1.4.0-f4c40f.svg)
 
 **English** · [Nederlands](#nederlands)
 
@@ -104,6 +104,9 @@ Per panel: `id`, `x`, `y` (grid coordinates), `orientation` (`portrait`/`landsca
 Per inverter: `id`, `x`, `y`, `brand`, `entity` (optional), `label`. Set `micro: true` for
 a micro-inverter; the brand is then one of `enphase`, `apsystems`, `growatt`, `hoymiles`.
 Without `micro` it is a string inverter (`goodwe`, `solaredge`, `growatt`, `solis`, `sunsynk`).
+In the visual editor you can pick a panel from the "Attach to panel…" dropdown on an
+inverter row to snap it just below that panel instead of positioning it by hand; this
+sets an optional `panelId` on the inverter (which YAML users can ignore).
 
 If an inverter has a sensor that reads 0 while the sun is down, a small sleep icon (Zzz)
 appears on the inverter. This mirrors the red 0 W warning that panels get during the day.
@@ -252,6 +255,9 @@ Per paneel: `id`, `x`, `y` (rastercoordinaten), `orientation` (`portrait`/`lands
 Per omvormer: `id`, `x`, `y`, `brand`, `entity` (optioneel), `label`. Zet `micro: true` voor
 een micro-omvormer; het merk is dan een van `enphase`, `apsystems`, `growatt`, `hoymiles`.
 Zonder `micro` is het een string-omvormer (`goodwe`, `solaredge`, `growatt`, `solis`, `sunsynk`).
+In de visuele editor kun je bij een omvormer-rij een paneel kiezen via "Koppel aan paneel…",
+waarna de omvormer direct onder dat paneel springt in plaats van dat je hem handmatig moet
+positioneren; dit zet een optionele `panelId` op de omvormer (voor YAML-gebruikers niet relevant).
 
 Als een omvormer een sensor heeft die 0 meet terwijl de zon onder is, verschijnt er een
 klein slaap-icoon (Zzz) op de omvormer. Dit is het spiegelbeeld van de rode 0 W-waarschuwing

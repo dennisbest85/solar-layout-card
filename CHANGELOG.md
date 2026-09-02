@@ -4,6 +4,10 @@ Alle noemenswaardige wijzigingen aan deze card worden hier bijgehouden.
 Formaat volgt [Keep a Changelog](https://keepachangelog.com/) en
 [Semantic Versioning](https://semver.org/).
 
+## [1.4.0] - 2026-09-02
+### Toegevoegd
+- Editor: bij een inverter of micro-inverter kun je nu een paneel kiezen uit een keuzelijst ("Koppel aan paneel…"). De inverter springt dan direct onder dat paneel op het canvas, in plaats van dat alles op elkaar gestapeld bij paneel 1 belandt. Je kunt hem daarna nog altijd handmatig verslepen.
+
 ## [1.3.3] - 2026-08-28
 ### Beveiliging
 - Sensorwaarden, eenheden en de weertoestand in de onderbalk, en paneel-/omvormerlabels werden ongeëscaped in de HTML van de card geplaatst. Een sensor met opmaak in de state of `unit_of_measurement` (bijvoorbeeld een REST-, scrape- of MQTT-sensor die externe of LAN-data doorgeeft) kon daardoor script laten uitvoeren in het dashboard. Deze waarden worden nu ge-escaped voordat ze in de template terechtkomen.
