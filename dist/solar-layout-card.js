@@ -1,5 +1,5 @@
-/*! solar-layout-card v1.7.0 | MIT License */
-const VERSION = "1.7.0";
+/*! solar-layout-card v1.8.0 | MIT License */
+const VERSION = "1.8.0";
 
 /* ---------- i18n ----------
  * Follows Home Assistant's UI language (hass.language). Supported: nl, de, en.
@@ -32,9 +32,12 @@ const TRANSLATIONS = {
     f_color_max: "Colour max output",
     f_zoom: "Zoom of this layout (%)",
     f_font: "Text size (%)",
+    panel_display: "Panel display",
+    show_panel_reading: "Show Watt value on panels (off: just the colour)",
     inv_display: "Inverter display (applies to all inverters)",
     hide_label: "Hide label",
     hide_sensor: "Hide sensor",
+    hide_sleep: "Hide sleep icon (Zzz)",
     footer_section: "Footer bar (weather, forecast, total)",
     f_weather: "Weather entity",
     f_forecast: "Forecast entity (expected output)",
@@ -120,9 +123,12 @@ const TRANSLATIONS = {
     f_color_max: "Kleur max opbrengst",
     f_zoom: "Zoom van dit legplan (%)",
     f_font: "Tekstgrootte (%)",
+    panel_display: "Paneel weergave",
+    show_panel_reading: "Toon Watt-waarde op panelen (uit: alleen de kleur)",
     inv_display: "Omvormer weergave (geldt voor alle omvormers)",
     hide_label: "Label verbergen",
     hide_sensor: "Sensor verbergen",
+    hide_sleep: "Slaap-icoontje verbergen (Zzz)",
     footer_section: "Onderbalk (weer, voorspelling, totaal)",
     f_weather: "Weer-entity",
     f_forecast: "Voorspelling-entity (verwachte opbrengst)",
@@ -204,9 +210,12 @@ const TRANSLATIONS = {
     f_color_max: "Farbe max. Ertrag",
     f_zoom: "Zoom dieses Layouts (%)",
     f_font: "Textgröße (%)",
+    panel_display: "Modul-Anzeige",
+    show_panel_reading: "Watt-Wert auf Modulen anzeigen (aus: nur die Farbe)",
     inv_display: "Wechselrichter-Anzeige (gilt für alle)",
     hide_label: "Bezeichnung ausblenden",
     hide_sensor: "Sensor ausblenden",
+    hide_sleep: "Schlaf-Symbol ausblenden (Zzz)",
     footer_section: "Fußzeile (Wetter, Prognose, Summe)",
     f_weather: "Wetter-Entität",
     f_forecast: "Prognose-Entität (erwarteter Ertrag)",
@@ -492,6 +501,9 @@ function normalizeConfig(config) {
     // inverter display toggles (apply to all inverters)
     inv_hide_label: !!config.inv_hide_label,
     inv_hide_sensor: !!config.inv_hide_sensor,
+    inv_hide_sleep: !!config.inv_hide_sleep,
+    // show the Watt value on panels; off leaves just the colour
+    show_panel_reading: config.show_panel_reading !== false,
     // animated bubbles along the connection lines; on unless explicitly false
     flow_dots: config.flow_dots !== false,
   };
@@ -600,6 +612,8 @@ function serializeConfig(cfg) {
   };
   if (cfg.inv_hide_label) out.inv_hide_label = true;
   if (cfg.inv_hide_sensor) out.inv_hide_sensor = true;
+  if (cfg.inv_hide_sleep) out.inv_hide_sleep = true;
+  if (cfg.show_panel_reading === false) out.show_panel_reading = false;
   if (cfg.flow_dots === false) out.flow_dots = false;
   // Keep any card-mod styling the user set, so editing in the UI doesn't drop it.
   if (cfg.weather_entity) out.weather_entity = cfg.weather_entity;
@@ -1016,6 +1030,8 @@ class SolarLayoutCard extends HTMLElement {
 
     const hideLabel = this._config.inv_hide_label;
     const hideSensor = this._config.inv_hide_sensor;
+    const hideSleep = this._config.inv_hide_sleep;
+    const showPanelReading = this._config.show_panel_reading !== false;
 
     // geometry helper: center of an item in grid-cell units (for line drawing)
     const centerOf = (it) => {
@@ -1093,10 +1109,10 @@ class SolarLayoutCard extends HTMLElement {
                data-id="${p.id}"
                data-entity="${p.entity}">
             <div class="cells"></div>
-            <div class="reading">
+            ${showPanelReading ? `<div class="reading">
               <span class="value">${escHtml(val)}</span>
               <span class="unit">${escHtml(unit)}</span>
-            </div>
+            </div>` : ""}
             ${p.label ? `<div class="plabel">${escHtml(p.label)}</div>` : ""}
             ${warn ? `<div class="warn" title="${t(hass, "warn_zero_day")}">!</div>` : ""}
             ${badgesHtml}
@@ -1119,7 +1135,7 @@ class SolarLayoutCard extends HTMLElement {
         const labelHtml = (!hideLabel && v.label) ? `<div class="inv-label">${escHtml(v.label)}</div>` : "";
         // Sleep badge: mirror of the panel "!" warning. Show a Zzz when the sun
         // is down AND a linked sensor genuinely reads 0 (so it "sleeps" at night).
-        const sleep = !daytime && hasState && Number.isFinite(num) && num === 0;
+        const sleep = !hideSleep && !daytime && hasState && Number.isFinite(num) && num === 0;
         const sleepHtml = sleep
           ? `<div class="inv-sleep" title="${t(hass, "sleep_title")}">${t(hass, "sleep_badge")}</div>`
           : "";
@@ -1936,10 +1952,18 @@ class SolarLayoutCardEditor extends HTMLElement {
         </div>
 
         <div class="field">
+          <label>${_t("panel_display")}</label>
+          <div class="checks">
+            <label class="chk"><input id="show_panel_reading" type="checkbox" /> ${_t("show_panel_reading")}</label>
+          </div>
+        </div>
+
+        <div class="field">
           <label>${_t("inv_display")}</label>
           <div class="checks">
             <label class="chk"><input id="hide_label" type="checkbox" /> ${_t("hide_label")}</label>
             <label class="chk"><input id="hide_sensor" type="checkbox" /> ${_t("hide_sensor")}</label>
+            <label class="chk"><input id="hide_sleep" type="checkbox" /> ${_t("hide_sleep")}</label>
             <label class="chk"><input id="flow_dots" type="checkbox" /> ${_t("flow_dots")}</label>
           </div>
         </div>
@@ -1987,8 +2011,10 @@ class SolarLayoutCardEditor extends HTMLElement {
     const maxEl = sr.getElementById("color_max");
     const zoomEl = sr.getElementById("zoom");
     const fontEl = sr.getElementById("font_scale");
+    const spReading = sr.getElementById("show_panel_reading");
     const hLbl = sr.getElementById("hide_label");
     const hSen = sr.getElementById("hide_sensor");
+    const hSleep = sr.getElementById("hide_sleep");
     const fDots = sr.getElementById("flow_dots");
     titleEl.value = this._config.title || "";
     refEl.value = this._config.reference;
@@ -1996,8 +2022,10 @@ class SolarLayoutCardEditor extends HTMLElement {
     maxEl.value = this._config.color_max;
     zoomEl.value = this._layout().zoom != null ? this._layout().zoom : this._config.zoom;
     fontEl.value = this._config.font_scale;
+    spReading.checked = this._config.show_panel_reading !== false;
     hLbl.checked = this._config.inv_hide_label;
     hSen.checked = this._config.inv_hide_sensor;
+    hSleep.checked = this._config.inv_hide_sleep;
     fDots.checked = this._config.flow_dots !== false;
 
     titleEl.addEventListener("input", (e) => {
@@ -2025,8 +2053,10 @@ class SolarLayoutCardEditor extends HTMLElement {
       this._config.font_scale = clamp(Number(e.target.value) || 100, 50, 200);
       this._emit();
     });
+    spReading.addEventListener("change", (e) => { this._config.show_panel_reading = e.target.checked; this._emit(); });
     hLbl.addEventListener("change", (e) => { this._config.inv_hide_label = e.target.checked; this._emit(); });
     hSen.addEventListener("change", (e) => { this._config.inv_hide_sensor = e.target.checked; this._emit(); });
+    hSleep.addEventListener("change", (e) => { this._config.inv_hide_sleep = e.target.checked; this._emit(); });
     fDots.addEventListener("change", (e) => { this._config.flow_dots = e.target.checked; this._emit(); });
 
     // footer bar fields

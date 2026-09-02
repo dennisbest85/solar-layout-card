@@ -1,7 +1,7 @@
 # Solar Layout Card
 
 ![hacs](https://img.shields.io/badge/HACS-Dashboard-41BDF5.svg)
-![version](https://img.shields.io/badge/version-1.7.0-f4c40f.svg)
+![version](https://img.shields.io/badge/version-1.8.0-f4c40f.svg)
 
 **English** · [Nederlands](#nederlands)
 
@@ -87,8 +87,10 @@ panels:
 | `font_scale`| number | `100`     | Text size in percent (50 to 200). |
 | `panels`    | list   | `[]`      | Panels (single layout). |
 | `inverters` | list   | `[]`      | Inverters and micro-inverters (single layout). |
+| `show_panel_reading` | bool | `true` | Show the Watt value on panels; off leaves just the colour. |
 | `inv_hide_label` | bool | `false` | Hide the inverter label. |
 | `inv_hide_sensor`| bool | `false` | Hide the inverter sensor value. |
+| `inv_hide_sleep` | bool | `false` | Hide the sleep icon (Zzz) shown on a sleeping inverter. |
 | `flow_dots`  | bool | `true`  | Toggle the moving dots along the connection lines. |
 | `weather_entity` | string | - | Weather entity for the footer bar. Off if unset. |
 | `forecast_entity` | string | - | Expected-output sensor (e.g. Forecast.Solar/Solcast) for the footer. Off if unset. |
@@ -249,8 +251,10 @@ panels:
 | `font_scale`| number | `100`     | Tekstgrootte in procent (50 tot 200). |
 | `panels`    | list   | `[]`      | Panelen (enkel legplan). |
 | `inverters` | list   | `[]`      | Omvormers en micro-omvormers (enkel legplan). |
+| `show_panel_reading` | bool | `true` | Toon de Watt-waarde op panelen; uit laat alleen de kleur zien. |
 | `inv_hide_label` | bool | `false` | Verberg het omvormer-label. |
 | `inv_hide_sensor`| bool | `false` | Verberg de omvormer-sensorwaarde. |
+| `inv_hide_sleep` | bool | `false` | Verberg het slaap-icoontje (Zzz) op een slapende omvormer. |
 | `flow_dots`  | bool | `true`  | Bewegende bolletjes over de verbindingslijnen aan/uit. |
 | `weather_entity` | string | - | Weer-entity voor de onderbalk. Uit als niet ingesteld. |
 | `forecast_entity` | string | - | Sensor met verwachte opbrengst (bijv. Forecast.Solar/Solcast) voor de onderbalk. Uit als niet ingesteld. |

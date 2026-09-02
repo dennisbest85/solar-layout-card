@@ -4,6 +4,11 @@ Alle noemenswaardige wijzigingen aan deze card worden hier bijgehouden.
 Formaat volgt [Keep a Changelog](https://keepachangelog.com/) en
 [Semantic Versioning](https://semver.org/).
 
+## [1.8.0] - 2026-09-02
+### Toegevoegd
+- Nieuwe instelling "Toon Watt-waarde op panelen" (`show_panel_reading`, standaard aan). Uitzetten laat alleen de kleur van het paneel oplichten, zonder de Watt-tekst erover — voor wie liever een rustiger, puur visueel overzicht heeft.
+- Nieuwe instelling "Slaap-icoontje verbergen" (`inv_hide_sleep`, standaard uit/icoontje getoond). Handig om het Zzz-badge helemaal uit te zetten als dat bij de gekozen weergave (bijvoorbeeld badge- of tekstmodus) een rommeltje wordt.
+
 ## [1.7.0] - 2026-09-02
 ### Gewijzigd
 - "Toon in beeld" is geen apart vinkje meer naast de weergave-keuzelijst, maar een vierde optie erin: **Badge op paneel**. Eén omvormer heeft daardoor altijd precies één weergavemodus in plaats van twee losse instellingen die elkaar konden tegenspreken (badge negeerde voorheen stilzwijgend de gekozen tekst/lijst-weergave).
