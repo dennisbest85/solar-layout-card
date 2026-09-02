@@ -4,6 +4,10 @@ Alle noemenswaardige wijzigingen aan deze card worden hier bijgehouden.
 Formaat volgt [Keep a Changelog](https://keepachangelog.com/) en
 [Semantic Versioning](https://semver.org/).
 
+## [1.6.0] - 2026-09-02
+### Toegevoegd
+- Elke (micro-)omvormer heeft nu een weergave-keuzelijst: "Afbeelding" (zoals voorheen), "Tekst" (compacte "label: waarde"-regel, geen plaatje) of "Uitgebreide gegevens" (een lijstje dat de hoofdsensor combineert met extra sensoren). Bij "Uitgebreide gegevens" verschijnt inline een "+ sensor"-lijst om extra entity/label-paren toe te voegen — handig als één fysieke micro-omvormer meerdere metingen heeft (frequentie, stroom, spanning) die je niet elk als aparte afbeeldingstegel wilt tonen. De "+ Omvormer"/"+ Micro-omvormer"-knoppen hebben nu een tooltip die dit uitlegt.
+
 ## [1.5.1] - 2026-09-02
 ### Opgelost
 - De paneelkoppeling (`panelId`) en "Toon in beeld" (`badge`) van een omvormer werden bij elke config-load weer weggegooid door een interne functie die omvormers herbouwde met alleen de oude velden. Hierdoor leek de koppeling na het heropenen van de editor verdwenen en had het vinkje voor "in beeld tonen" geen zichtbaar effect. Beide velden worden nu behouden.

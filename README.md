@@ -1,7 +1,7 @@
 # Solar Layout Card
 
 ![hacs](https://img.shields.io/badge/HACS-Dashboard-41BDF5.svg)
-![version](https://img.shields.io/badge/version-1.5.1-f4c40f.svg)
+![version](https://img.shields.io/badge/version-1.6.0-f4c40f.svg)
 
 **English** · [Nederlands](#nederlands)
 
@@ -111,6 +111,14 @@ is chosen, the "Show in picture" checkbox nests the inverter as a small badge in
 corner of that panel (name and reading shown on hover) instead of a separate tile; this
 sets an optional `badge: true`. Any wires to/from that inverter are removed when you
 turn badge mode on, since it's then part of the panel rather than a separate node.
+
+Each inverter also has a display mode, `display`: `image` (default; the usual picture
+tile), `text` (a compact `label: value` line, no picture — handy if you'd rather not
+repeat the brand image for every sensor), or `extended` (a small list combining `entity`
+with an `extra` array of `{ id, entity, label }` sensors, for showing several readings —
+e.g. frequency, current, voltage — from one physical inverter without adding a separate
+tile per sensor). In the editor this is the "display" dropdown on the inverter row; picking
+"Extended data" reveals an inline "+ sensor" list to add the extra entities.
 
 If an inverter has a sensor that reads 0 while the sun is down, a small sleep icon (Zzz)
 appears on the inverter. This mirrors the red 0 W warning that panels get during the day.
@@ -266,6 +274,15 @@ Zodra er een paneel gekoppeld is, plaatst het "Toon in beeld"-vinkje de omvormer
 badge-icoontje in de hoek van dat paneel (naam en waarde als tooltip bij hover) in plaats van
 als los vak; dit zet een optionele `badge: true`. Eventuele bedradingslijnen naar die omvormer
 worden verwijderd zodra je deze stand aanzet, omdat de omvormer dan bij het paneel hoort.
+
+Elke omvormer heeft ook een weergavemodus, `display`: `image` (standaard; de gebruikelijke
+afbeeldingstegel), `text` (een compacte "label: waarde"-regel, zonder afbeelding — handig
+als je niet voor elke sensor hetzelfde merk-plaatje wilt herhalen), of `extended` (een klein
+lijstje dat `entity` combineert met een `extra`-array van `{ id, entity, label }`-sensoren,
+om meerdere metingen — bijvoorbeeld frequentie, stroom, spanning — van één fysieke omvormer
+te tonen zonder per sensor een aparte tegel toe te voegen). In de editor is dit de
+"weergave"-keuzelijst op de omvormer-rij; kies je "Uitgebreide gegevens", dan verschijnt
+er inline een "+ sensor"-lijstje om de extra entities toe te voegen.
 
 Als een omvormer een sensor heeft die 0 meet terwijl de zon onder is, verschijnt er een
 klein slaap-icoon (Zzz) op de omvormer. Dit is het spiegelbeeld van de rode 0 W-waarschuwing

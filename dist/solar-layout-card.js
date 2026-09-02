@@ -1,5 +1,5 @@
-/*! solar-layout-card v1.5.1 | MIT License */
-const VERSION = "1.5.1";
+/*! solar-layout-card v1.6.0 | MIT License */
+const VERSION = "1.6.0";
 
 /* ---------- i18n ----------
  * Follows Home Assistant's UI language (hass.language). Supported: nl, de, en.
@@ -83,6 +83,14 @@ const TRANSLATIONS = {
     attach_panel: "Attach to panel…",
     attach_panel_title: "Place this inverter on/below a panel",
     show_in_picture_title: "Show in picture: nest this inverter as a badge on its panel instead of a separate tile",
+    disp_image: "Image",
+    disp_text: "Text",
+    disp_extended: "Extended data",
+    disp_title: "How this inverter's tile is shown: an image, a compact text line, or a list combining several sensors",
+    add_extra: "+ sensor",
+    remove_extra: "remove sensor",
+    add_inv_help: "Add an inverter with a live sensor. Per inverter you can pick how it's shown: an image, a compact text line, or a list of several sensors (extended data) — see the display dropdown on its row.",
+    add_micro_help: "Add a micro-inverter (small unit mounted per panel). Per micro-inverter you can pick how it's shown: an image, a compact text line, or a list of several sensors (extended data) — see the display dropdown on its row.",
   },
   nl: {
     title_default: "Zonnepanelen",
@@ -154,6 +162,14 @@ const TRANSLATIONS = {
     attach_panel: "Koppel aan paneel…",
     attach_panel_title: "Plaats deze omvormer op/onder een paneel",
     show_in_picture_title: "Toon in beeld: plaats deze omvormer als badge op het paneel in plaats van als los vak",
+    disp_image: "Afbeelding",
+    disp_text: "Tekst",
+    disp_extended: "Uitgebreide gegevens",
+    disp_title: "Hoe deze omvormer wordt getoond: een afbeelding, een compacte tekstregel, of een lijst met meerdere sensoren",
+    add_extra: "+ sensor",
+    remove_extra: "sensor verwijderen",
+    add_inv_help: "Voeg een omvormer met een live sensor toe. Per omvormer kun je kiezen hoe hij getoond wordt: een afbeelding, een compacte tekstregel, of een lijst met meerdere sensoren (uitgebreide gegevens) — zie de weergave-keuzelijst op die rij.",
+    add_micro_help: "Voeg een micro-omvormer toe (klein exemplaar per paneel). Per micro-omvormer kun je kiezen hoe hij getoond wordt: een afbeelding, een compacte tekstregel, of een lijst met meerdere sensoren (uitgebreide gegevens) — zie de weergave-keuzelijst op die rij.",
   },
   de: {
     title_default: "Solarmodule",
@@ -225,6 +241,14 @@ const TRANSLATIONS = {
     attach_panel: "An Modul anhängen…",
     attach_panel_title: "Diesen Wechselrichter auf/unter einem Modul platzieren",
     show_in_picture_title: "Im Bild anzeigen: diesen Wechselrichter als Badge auf dem Modul statt als eigene Kachel anzeigen",
+    disp_image: "Bild",
+    disp_text: "Text",
+    disp_extended: "Erweiterte Daten",
+    disp_title: "Wie dieser Wechselrichter angezeigt wird: als Bild, als kompakte Textzeile, oder als Liste mehrerer Sensoren",
+    add_extra: "+ Sensor",
+    remove_extra: "Sensor entfernen",
+    add_inv_help: "Wechselrichter mit einem Live-Sensor hinzufügen. Pro Wechselrichter kannst du wählen, wie er angezeigt wird: als Bild, als kompakte Textzeile, oder als Liste mehrerer Sensoren (erweiterte Daten) — siehe die Anzeige-Auswahl in dieser Zeile.",
+    add_micro_help: "Mikro-Wechselrichter hinzufügen (kleine Einheit pro Modul). Pro Mikro-Wechselrichter kannst du wählen, wie er angezeigt wird: als Bild, als kompakte Textzeile, oder als Liste mehrerer Sensoren (erweiterte Daten) — siehe die Anzeige-Auswahl in dieser Zeile.",
   },
 };
 function langOf(hass) {
@@ -474,6 +498,11 @@ function normalizeConfig(config) {
     label: p.label || "",
     wp: Number(p.wp) > 0 ? Number(p.wp) : ref,
   });
+  const normExtra = (ex) => ({
+    id: ex.id || uid(),
+    entity: ex.entity || "",
+    label: ex.label || "",
+  });
   const normInverter = (v) => {
     const micro = !!v.micro;
     const brandOk = micro ? MICRO_INVERTERS[v.brand] : INVERTERS[v.brand];
@@ -487,6 +516,10 @@ function normalizeConfig(config) {
       label: v.label || "",
       panelId: v.panelId || null,
       badge: !!v.badge,
+      // how this inverter's tile renders: the image+value tile (default),
+      // a compact text line, or a list combining `entity` with `extra`
+      display: (v.display === "text" || v.display === "extended") ? v.display : "image",
+      extra: Array.isArray(v.extra) ? v.extra.map(normExtra) : [],
     };
   };
   const normConn = (c) => ({
@@ -1010,7 +1043,15 @@ class SolarLayoutCard extends HTMLElement {
             const b = invMeta(v);
             const { val: bval, unit: bunit } = fmtAt(v.entity);
             const bHasState = hasStateAt(v.entity);
-            const title = `${b.name}${v.label ? " " + v.label : ""}${bHasState ? `: ${bval} ${bunit}` : ""}`;
+            // a badge is icon-only, so any extended-data sensors surface via the tooltip
+            const extraLines = (v.extra || [])
+              .filter((ex) => ex.entity && hasStateAt(ex.entity))
+              .map((ex) => {
+                const { val: ev, unit: eu } = fmtAt(ex.entity);
+                return `\n${ex.label ? ex.label + ": " : ""}${ev} ${eu}`;
+              })
+              .join("");
+            const title = `${b.name}${v.label ? " " + v.label : ""}${bHasState ? `: ${bval} ${bunit}` : ""}${extraLines}`;
             return `<div class="inv-badge" data-id="${v.id}" data-entity="${v.entity}"
                  style="--inv:${b.color};" title="${escHtml(title)}">
               ${hideImage ? "" : `<img class="inv-badge-img" src="${invImg(v)}" alt="${escHtml(b.name)}" />`}
@@ -1059,17 +1100,40 @@ class SolarLayoutCard extends HTMLElement {
         const sleepHtml = sleep
           ? `<div class="inv-sleep" title="${t(hass, "sleep_title")}">${t(hass, "sleep_badge")}</div>`
           : "";
+        // "text" and "extended" display modes replace the image tile with a
+        // compact value line, or a list combining `entity` with `extra`.
+        const sensorLine = (entity, lbl) => {
+          if (hideSensor || !entity || !hasStateAt(entity)) return null;
+          const { val: lv, unit: lu } = fmtAt(entity);
+          return { label: lbl, val: lv, unit: lu };
+        };
+        let bodyHtml;
+        if (v.display === "text") {
+          const line = sensorLine(v.entity, v.label);
+          bodyHtml = line
+            ? `<div class="inv-text">${line.label ? `<span class="inv-text-label">${escHtml(line.label)}:</span> ` : ""}<span class="inv-text-val">${escHtml(line.val)} ${escHtml(line.unit)}</span></div>`
+            : `<div class="inv-text inv-muted">—</div>`;
+        } else if (v.display === "extended") {
+          const lines = [sensorLine(v.entity, v.label)]
+            .concat((v.extra || []).map((ex) => sensorLine(ex.entity, ex.label)))
+            .filter(Boolean);
+          const titleHtml = (!hideLabel && v.label) ? `<div class="inv-list-title">${escHtml(v.label)}</div>` : "";
+          bodyHtml = titleHtml + (lines.length
+            ? `<div class="inv-list">${lines
+                .map((l) => `<div class="inv-list-row">${l.label ? `<span class="inv-list-label">${escHtml(l.label)}</span>` : ""}<span class="inv-list-val">${escHtml(l.val)} ${escHtml(l.unit)}</span></div>`)
+                .join("")}</div>`
+            : `<div class="inv-list inv-muted">—</div>`);
+        } else {
+          bodyHtml = `${image}${brandHtml}${labelHtml}${reading}`;
+        }
         return `
-          <div class="inverter${v.micro ? " micro" : ""}"
+          <div class="inverter${v.micro ? " micro" : ""} disp-${v.display}"
                style="grid-column:${v.x + 1}/span ${dims.w};
                       grid-row:${v.y + 1}/span ${dims.h};
                       --inv:${brand.color};"
                data-id="${v.id}"
                data-entity="${v.entity}">
-            ${image}
-            ${brandHtml}
-            ${labelHtml}
-            ${reading}
+            ${bodyHtml}
             ${sleepHtml}
           </div>`;
       })
@@ -1617,6 +1681,26 @@ class SolarLayoutCard extends HTMLElement {
         color: var(--primary-text-color);
         text-shadow: 0 0 3px var(--card-background-color, #000), 0 0 3px var(--card-background-color, #000);
       }
+      /* "text" / "extended" display modes: no image, just value(s) as text */
+      .inverter.disp-text, .inverter.disp-extended {
+        align-items: flex-start; justify-content: center; text-align: left;
+        padding: 4px 6px;
+      }
+      .inv-text, .inv-list-row {
+        font-size: ${(0.72 * (fontScale || 1)).toFixed(3)}rem;
+        color: var(--primary-text-color); white-space: nowrap;
+      }
+      .inv-text-label, .inv-list-label {
+        color: var(--secondary-text-color); margin-right: 4px;
+      }
+      .inv-text-val, .inv-list-val { font-weight: 700; }
+      .inv-list { display: flex; flex-direction: column; gap: 1px; width: 100%; }
+      .inv-list-row { display: flex; justify-content: space-between; gap: 8px; }
+      .inv-list-title {
+        font-weight: 700; color: var(--inv, #fff);
+        font-size: ${(0.7 * (fontScale || 1)).toFixed(3)}rem; margin-bottom: 2px;
+      }
+      .inv-muted { color: var(--secondary-text-color); font-size: .8rem; }
       .warn {
         position: absolute; top: 2px; right: 3px; z-index: 4;
         width: ${Math.max(14, Math.round(16 * (fontScale || 1)))}px;
@@ -1861,8 +1945,8 @@ class SolarLayoutCardEditor extends HTMLElement {
 
         <div class="addbar">
           <button id="add" class="add">${_t("add_panel")}</button>
-          <button id="addinv" class="add">${_t("add_inverter")}</button>
-          <button id="addmicro" class="add">${_t("add_micro")}</button>
+          <button id="addinv" class="add" title="${_t("add_inv_help")}">${_t("add_inverter")}</button>
+          <button id="addmicro" class="add" title="${_t("add_micro_help")}">${_t("add_micro")}</button>
         </div>
 
         <div class="list" id="list"></div>
@@ -2432,7 +2516,7 @@ class SolarLayoutCardEditor extends HTMLElement {
     const entities = this._entityList();
     if (!entities.length) return;
     const opts = entities.map((e) => `<option value="${e}"></option>`).join("");
-    this.shadowRoot.querySelectorAll(".prow datalist, .irow datalist, #slc-entities").forEach((dl) => {
+    this.shadowRoot.querySelectorAll(".prow datalist, .irow datalist, .iextra datalist, #slc-entities").forEach((dl) => {
       dl.innerHTML = opts;
     });
     // weather picker gets weather.* entities
@@ -2541,6 +2625,82 @@ class SolarLayoutCardEditor extends HTMLElement {
     row.className = "irow";
     row.dataset.id = v.id;
 
+    // Extended data: a compact list of extra sensors shown alongside the
+    // main entity when display = "extended". Built once, rebuilt on edits.
+    const extraBox = document.createElement("div");
+    extraBox.className = "iextra";
+    extraBox.hidden = v.display !== "extended";
+    const rebuildExtra = () => {
+      extraBox.innerHTML = "";
+      (v.extra || []).forEach((ex) => {
+        const exRow = document.createElement("div");
+        exRow.className = "iextra-row";
+        exRow.dataset.id = ex.id;
+
+        const exListId = `inv-ext-${ex.id}`;
+        const exEnt = document.createElement("input");
+        exEnt.className = "ent";
+        exEnt.type = "text";
+        exEnt.setAttribute("list", exListId);
+        exEnt.placeholder = "zoek sensor...";
+        exEnt.value = ex.entity || "";
+        const exDatalist = document.createElement("datalist");
+        exDatalist.id = exListId;
+        const exCommit = (e) => {
+          const val = e.target.value.trim();
+          const opts = this._entityList();
+          if (val === "" || opts.includes(val)) {
+            ex.entity = val;
+            this._refreshInverterNode(v);
+            this._emit();
+          }
+        };
+        exEnt.addEventListener("change", exCommit);
+        exEnt.addEventListener("input", (e) => {
+          if (this._entityList().includes(e.target.value.trim())) exCommit(e);
+        });
+
+        const exLbl = document.createElement("input");
+        exLbl.className = "lbl";
+        exLbl.type = "text";
+        exLbl.placeholder = "label";
+        exLbl.value = ex.label || "";
+        exLbl.addEventListener("input", (e) => {
+          ex.label = e.target.value;
+          this._refreshInverterNode(v);
+          this._emit();
+        });
+
+        const exDel = document.createElement("button");
+        exDel.className = "del";
+        exDel.title = t(this._hass, "remove_extra");
+        exDel.textContent = "✕";
+        exDel.addEventListener("click", () => {
+          v.extra = (v.extra || []).filter((x) => x.id !== ex.id);
+          rebuildExtra();
+          this._refreshInverterNode(v);
+          this._emit();
+        });
+
+        exRow.append(exEnt, exDatalist, exLbl, exDel);
+        extraBox.appendChild(exRow);
+      });
+
+      const addBtn = document.createElement("button");
+      addBtn.type = "button";
+      addBtn.className = "addextra";
+      addBtn.textContent = t(this._hass, "add_extra");
+      addBtn.addEventListener("click", () => {
+        v.extra = (v.extra || []).concat([{ id: uid(), entity: "", label: "" }]);
+        rebuildExtra();
+        this._refreshInverterNode(v);
+        this._emit();
+        this._refreshEntityOptions();
+      });
+      extraBox.appendChild(addBtn);
+    };
+    rebuildExtra();
+
     const brandMap = v.micro ? MICRO_INVERTERS : INVERTERS;
     const kind = document.createElement("span");
     kind.className = "ikind";
@@ -2604,6 +2764,24 @@ class SolarLayoutCardEditor extends HTMLElement {
       badgeChk.disabled = !v.panelId;
     });
 
+    // Per-inverter display mode: full image tile, a compact text line, or
+    // a list combining the main entity with the "extended data" sensors.
+    const dispSel = document.createElement("select");
+    dispSel.className = "dispsel";
+    dispSel.title = t(this._hass, "disp_title");
+    dispSel.innerHTML = [
+      ["image", "disp_image"],
+      ["text", "disp_text"],
+      ["extended", "disp_extended"],
+    ].map(([val, key]) => `<option value="${val}">${escHtml(t(this._hass, key))}</option>`).join("");
+    dispSel.value = v.display || "image";
+    dispSel.addEventListener("change", (e) => {
+      v.display = e.target.value;
+      extraBox.hidden = v.display !== "extended";
+      this._refreshInverterNode(v);
+      this._emit();
+    });
+
     const brand = document.createElement("select");
     brand.className = "brand";
     brand.innerHTML = Object.keys(brandMap)
@@ -2657,8 +2835,13 @@ class SolarLayoutCardEditor extends HTMLElement {
     del.textContent = "✕";
     del.addEventListener("click", () => this._removeInverter(v.id));
 
-    row.append(kind, panelSel, badgeChk, brand, lbl, ent, datalist, del);
-    return row;
+    row.append(kind, panelSel, badgeChk, dispSel, brand, lbl, ent, datalist, del);
+
+    const wrap = document.createElement("div");
+    wrap.className = "irow-wrap";
+    wrap.dataset.id = v.id;
+    wrap.append(row, extraBox);
+    return wrap;
   }
 
   _addInverter(micro = false) {
@@ -2671,6 +2854,8 @@ class SolarLayoutCardEditor extends HTMLElement {
       label: "",
       panelId: null,
       badge: false,
+      display: "image",
+      extra: [],
     };
     this._inverters().push(v);
     this._appendInverterNode(v);
@@ -2719,7 +2904,7 @@ class SolarLayoutCardEditor extends HTMLElement {
     l.connections = (l.connections || []).filter((c) => c.from !== id && c.to !== id);
     const node = this._canvasNode(id);
     if (node) node.remove();
-    const row = this.shadowRoot.querySelector(`.irow[data-id="${id}"]`);
+    const row = this.shadowRoot.querySelector(`.irow-wrap[data-id="${id}"]`);
     if (row) row.remove();
     this._renderConnList();
     this._redrawConnections();
@@ -2892,9 +3077,21 @@ class SolarLayoutCardEditor extends HTMLElement {
       .prow .lbl { width:100%; }
       .prow .wp { width:100%; text-align:right; }
       .prow button { cursor:pointer; }
-      .irow { display:grid; grid-template-columns: 46px 100px 18px 110px 84px 1fr auto; gap:6px; align-items:center; }
+      .irow { display:grid; grid-template-columns: 46px 100px 18px 100px 110px 84px 1fr auto; gap:6px; align-items:center; }
       .irow .badgechk { cursor:pointer; width:16px; height:16px; margin:0; }
       .irow .badgechk:disabled { opacity:.35; cursor:default; }
+      .iextra {
+        display:flex; flex-direction:column; gap:6px;
+        margin:2px 0 4px 52px; padding:6px 0 0; border-top:1px dashed var(--divider-color,#444);
+      }
+      .iextra[hidden] { display:none; }
+      .iextra-row { display:grid; grid-template-columns: 1fr 84px auto; gap:6px; align-items:center; }
+      .iextra-row datalist { display:none; }
+      .iextra .addextra {
+        align-self:flex-start; cursor:pointer; font-size:.75rem;
+        background:none; border:1px dashed var(--divider-color,#666); border-radius:4px;
+        color:var(--secondary-text-color); padding:3px 8px;
+      }
       .irow .ikind {
         font-size:.68rem; text-align:center; padding:2px 0; border-radius:5px;
         background:var(--secondary-background-color,#333); color:var(--secondary-text-color);
