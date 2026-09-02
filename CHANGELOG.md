@@ -4,6 +4,12 @@ Alle noemenswaardige wijzigingen aan deze card worden hier bijgehouden.
 Formaat volgt [Keep a Changelog](https://keepachangelog.com/) en
 [Semantic Versioning](https://semver.org/).
 
+## [1.7.0] - 2026-09-02
+### Gewijzigd
+- "Toon in beeld" is geen apart vinkje meer naast de weergave-keuzelijst, maar een vierde optie erin: **Badge op paneel**. Eén omvormer heeft daardoor altijd precies één weergavemodus in plaats van twee losse instellingen die elkaar konden tegenspreken (badge negeerde voorheen stilzwijgend de gekozen tekst/lijst-weergave).
+- De globale "Hide image"-instelling (gold voor alle omvormers) is verwijderd. Die overschreef stilzwijgend een rij die expliciet op "Afbeelding" stond, wat verwarrend was nu er per omvormer een "Tekst"-weergave bestaat. Bestaande configuraties met deze instelling migreren automatisch: omvormers zonder expliciet gekozen weergave krijgen "Tekst" in plaats van dat het plaatje straks weer terugkomt.
+- Per veld op een omvormer-rij (paneel, weergave, merk, label, hoofdsensor, extra sensoren) staat nu een uitlegende tooltip, en boven de "extra sensoren"-lijst een tekstregel die duidelijk maakt dat deze náást de hoofdsensor getoond worden. De hoofdsensor heeft een duidelijkere placeholder ("hoofdsensor" i.p.v. "zoek sensor").
+
 ## [1.6.0] - 2026-09-02
 ### Toegevoegd
 - Elke (micro-)omvormer heeft nu een weergave-keuzelijst: "Afbeelding" (zoals voorheen), "Tekst" (compacte "label: waarde"-regel, geen plaatje) of "Uitgebreide gegevens" (een lijstje dat de hoofdsensor combineert met extra sensoren). Bij "Uitgebreide gegevens" verschijnt inline een "+ sensor"-lijst om extra entity/label-paren toe te voegen — handig als één fysieke micro-omvormer meerdere metingen heeft (frequentie, stroom, spanning) die je niet elk als aparte afbeeldingstegel wilt tonen. De "+ Omvormer"/"+ Micro-omvormer"-knoppen hebben nu een tooltip die dit uitlegt.

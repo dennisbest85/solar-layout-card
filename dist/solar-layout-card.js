@@ -1,5 +1,5 @@
-/*! solar-layout-card v1.6.0 | MIT License */
-const VERSION = "1.6.0";
+/*! solar-layout-card v1.7.0 | MIT License */
+const VERSION = "1.7.0";
 
 /* ---------- i18n ----------
  * Follows Home Assistant's UI language (hass.language). Supported: nl, de, en.
@@ -33,7 +33,6 @@ const TRANSLATIONS = {
     f_zoom: "Zoom of this layout (%)",
     f_font: "Text size (%)",
     inv_display: "Inverter display (applies to all inverters)",
-    hide_image: "Hide image",
     hide_label: "Hide label",
     hide_sensor: "Hide sensor",
     footer_section: "Footer bar (weather, forecast, total)",
@@ -81,16 +80,22 @@ const TRANSLATIONS = {
     kind_inv_title: "Inverter",
     panel_label: "Panel",
     attach_panel: "Attach to panel…",
-    attach_panel_title: "Place this inverter on/below a panel",
-    show_in_picture_title: "Show in picture: nest this inverter as a badge on its panel instead of a separate tile",
+    attach_panel_title: "Which panel this inverter belongs to. Placing it snaps it just below that panel; pick \"Badge on panel\" below to nest it on the panel instead",
     disp_image: "Image",
     disp_text: "Text",
     disp_extended: "Extended data",
-    disp_title: "How this inverter's tile is shown: an image, a compact text line, or a list combining several sensors",
+    disp_badge: "Badge on panel",
+    disp_title: "How this inverter is shown: a picture tile, a compact text line, a list of several sensors, or a small badge nested on its panel (pick a panel above first)",
+    brand_title: "Brand: sets the picture and accent colour",
+    inv_label_title: "Optional label, shown on the tile/badge and as the heading above extended data",
+    inv_main_entity_ph: "main sensor (optional)...",
+    inv_main_entity_title: "The main sensor for this inverter — its value is what \"Image\"/\"Text\" mode shows, and the first line in \"Extended data\"",
     add_extra: "+ sensor",
     remove_extra: "remove sensor",
-    add_inv_help: "Add an inverter with a live sensor. Per inverter you can pick how it's shown: an image, a compact text line, or a list of several sensors (extended data) — see the display dropdown on its row.",
-    add_micro_help: "Add a micro-inverter (small unit mounted per panel). Per micro-inverter you can pick how it's shown: an image, a compact text line, or a list of several sensors (extended data) — see the display dropdown on its row.",
+    extra_legend: "Extra sensors shown together with the main sensor above:",
+    extra_entity_title: "An additional sensor to include in the extended-data list",
+    add_inv_help: "Add an inverter with a live sensor. Per inverter you can pick how it's shown: an image, a compact text line, a list of several sensors (extended data), or a small badge nested on its panel — see the display dropdown on its row.",
+    add_micro_help: "Add a micro-inverter (small unit mounted per panel). Per micro-inverter you can pick how it's shown: an image, a compact text line, a list of several sensors (extended data), or a small badge nested on its panel — see the display dropdown on its row.",
   },
   nl: {
     title_default: "Zonnepanelen",
@@ -116,7 +121,6 @@ const TRANSLATIONS = {
     f_zoom: "Zoom van dit legplan (%)",
     f_font: "Tekstgrootte (%)",
     inv_display: "Omvormer weergave (geldt voor alle omvormers)",
-    hide_image: "Afbeelding verbergen",
     hide_label: "Label verbergen",
     hide_sensor: "Sensor verbergen",
     footer_section: "Onderbalk (weer, voorspelling, totaal)",
@@ -160,16 +164,22 @@ const TRANSLATIONS = {
     kind_inv_title: "Omvormer",
     panel_label: "Paneel",
     attach_panel: "Koppel aan paneel…",
-    attach_panel_title: "Plaats deze omvormer op/onder een paneel",
-    show_in_picture_title: "Toon in beeld: plaats deze omvormer als badge op het paneel in plaats van als los vak",
+    attach_panel_title: "Bij welk paneel deze omvormer hoort. Koppelen zet hem direct onder dat paneel; kies hieronder \"Badge op paneel\" om hem juist óp het paneel te nestelen",
     disp_image: "Afbeelding",
     disp_text: "Tekst",
     disp_extended: "Uitgebreide gegevens",
-    disp_title: "Hoe deze omvormer wordt getoond: een afbeelding, een compacte tekstregel, of een lijst met meerdere sensoren",
+    disp_badge: "Badge op paneel",
+    disp_title: "Hoe deze omvormer wordt getoond: een afbeeldingstegel, een compacte tekstregel, een lijst met meerdere sensoren, of een klein badge genesteld op het paneel (kies eerst een paneel hierboven)",
+    brand_title: "Merk: bepaalt de afbeelding en accentkleur",
+    inv_label_title: "Optioneel label, getoond op de tegel/badge en als kopje boven uitgebreide gegevens",
+    inv_main_entity_ph: "hoofdsensor (optioneel)...",
+    inv_main_entity_title: "De hoofdsensor van deze omvormer — de waarde die \"Afbeelding\"/\"Tekst\" toont, en de eerste regel bij \"Uitgebreide gegevens\"",
     add_extra: "+ sensor",
     remove_extra: "sensor verwijderen",
-    add_inv_help: "Voeg een omvormer met een live sensor toe. Per omvormer kun je kiezen hoe hij getoond wordt: een afbeelding, een compacte tekstregel, of een lijst met meerdere sensoren (uitgebreide gegevens) — zie de weergave-keuzelijst op die rij.",
-    add_micro_help: "Voeg een micro-omvormer toe (klein exemplaar per paneel). Per micro-omvormer kun je kiezen hoe hij getoond wordt: een afbeelding, een compacte tekstregel, of een lijst met meerdere sensoren (uitgebreide gegevens) — zie de weergave-keuzelijst op die rij.",
+    extra_legend: "Extra sensoren, getoond naast de hoofdsensor hierboven:",
+    extra_entity_title: "Een extra sensor om toe te voegen aan het lijstje bij uitgebreide gegevens",
+    add_inv_help: "Voeg een omvormer met een live sensor toe. Per omvormer kun je kiezen hoe hij getoond wordt: een afbeelding, een compacte tekstregel, een lijst met meerdere sensoren (uitgebreide gegevens), of een klein badge op het paneel — zie de weergave-keuzelijst op die rij.",
+    add_micro_help: "Voeg een micro-omvormer toe (klein exemplaar per paneel). Per micro-omvormer kun je kiezen hoe hij getoond wordt: een afbeelding, een compacte tekstregel, een lijst met meerdere sensoren (uitgebreide gegevens), of een klein badge op het paneel — zie de weergave-keuzelijst op die rij.",
   },
   de: {
     title_default: "Solarmodule",
@@ -195,7 +205,6 @@ const TRANSLATIONS = {
     f_zoom: "Zoom dieses Layouts (%)",
     f_font: "Textgröße (%)",
     inv_display: "Wechselrichter-Anzeige (gilt für alle)",
-    hide_image: "Bild ausblenden",
     hide_label: "Bezeichnung ausblenden",
     hide_sensor: "Sensor ausblenden",
     footer_section: "Fußzeile (Wetter, Prognose, Summe)",
@@ -239,16 +248,22 @@ const TRANSLATIONS = {
     kind_inv_title: "Wechselrichter",
     panel_label: "Modul",
     attach_panel: "An Modul anhängen…",
-    attach_panel_title: "Diesen Wechselrichter auf/unter einem Modul platzieren",
-    show_in_picture_title: "Im Bild anzeigen: diesen Wechselrichter als Badge auf dem Modul statt als eigene Kachel anzeigen",
+    attach_panel_title: "Zu welchem Modul dieser Wechselrichter gehört. Zuweisen setzt ihn direkt unter dieses Modul; wähle unten \"Badge auf Modul\", um ihn stattdessen auf dem Modul zu platzieren",
     disp_image: "Bild",
     disp_text: "Text",
     disp_extended: "Erweiterte Daten",
-    disp_title: "Wie dieser Wechselrichter angezeigt wird: als Bild, als kompakte Textzeile, oder als Liste mehrerer Sensoren",
+    disp_badge: "Badge auf Modul",
+    disp_title: "Wie dieser Wechselrichter angezeigt wird: als Bildkachel, als kompakte Textzeile, als Liste mehrerer Sensoren, oder als kleines Badge auf dem Modul (zuerst oben ein Modul wählen)",
+    brand_title: "Marke: bestimmt Bild und Akzentfarbe",
+    inv_label_title: "Optionale Bezeichnung, angezeigt auf der Kachel/dem Badge und als Überschrift über erweiterten Daten",
+    inv_main_entity_ph: "Hauptsensor (optional)...",
+    inv_main_entity_title: "Der Hauptsensor dieses Wechselrichters — sein Wert wird im Modus \"Bild\"/\"Text\" angezeigt, und als erste Zeile bei \"Erweiterte Daten\"",
     add_extra: "+ Sensor",
     remove_extra: "Sensor entfernen",
-    add_inv_help: "Wechselrichter mit einem Live-Sensor hinzufügen. Pro Wechselrichter kannst du wählen, wie er angezeigt wird: als Bild, als kompakte Textzeile, oder als Liste mehrerer Sensoren (erweiterte Daten) — siehe die Anzeige-Auswahl in dieser Zeile.",
-    add_micro_help: "Mikro-Wechselrichter hinzufügen (kleine Einheit pro Modul). Pro Mikro-Wechselrichter kannst du wählen, wie er angezeigt wird: als Bild, als kompakte Textzeile, oder als Liste mehrerer Sensoren (erweiterte Daten) — siehe die Anzeige-Auswahl in dieser Zeile.",
+    extra_legend: "Zusätzliche Sensoren, zusammen mit dem Hauptsensor oben angezeigt:",
+    extra_entity_title: "Ein zusätzlicher Sensor für die Liste der erweiterten Daten",
+    add_inv_help: "Wechselrichter mit einem Live-Sensor hinzufügen. Pro Wechselrichter kannst du wählen, wie er angezeigt wird: als Bild, als kompakte Textzeile, als Liste mehrerer Sensoren (erweiterte Daten), oder als kleines Badge auf dem Modul — siehe die Anzeige-Auswahl in dieser Zeile.",
+    add_micro_help: "Mikro-Wechselrichter hinzufügen (kleine Einheit pro Modul). Pro Mikro-Wechselrichter kannst du wählen, wie er angezeigt wird: als Bild, als kompakte Textzeile, als Liste mehrerer Sensoren (erweiterte Daten), oder als kleines Badge auf dem Modul — siehe die Anzeige-Auswahl in dieser Zeile.",
   },
 };
 function langOf(hass) {
@@ -423,6 +438,11 @@ function invMeta(v) {
 function invImg(v) {
   return v && v.micro ? microImg(v.brand) : inverterImg(v.brand);
 }
+// An inverter only actually renders as a badge (nested on its panel) while
+// that panel still exists; otherwise it falls back to a normal tile.
+function isBadgeInverter(v, panels) {
+  return !!(v && v.display === "badge" && v.panelId && panels.some((p) => p.id === v.panelId));
+}
 function invDims(v) {
   return v && v.micro
     ? { w: MICRO_W, h: MICRO_H }
@@ -472,10 +492,13 @@ function normalizeConfig(config) {
     // inverter display toggles (apply to all inverters)
     inv_hide_label: !!config.inv_hide_label,
     inv_hide_sensor: !!config.inv_hide_sensor,
-    inv_hide_image: !!config.inv_hide_image,
     // animated bubbles along the connection lines; on unless explicitly false
     flow_dots: config.flow_dots !== false,
   };
+  // Replaced by the per-inverter "text" display mode. Only read here (never
+  // written back) to migrate old configs: an inverter without an explicit
+  // display gets "text" instead of silently losing its image.
+  const legacyHideImage = !!config.inv_hide_image;
   // Preserve card-mod styling config so it survives normalisation. card-mod
   // reads either `card_mod:` (object) or a bare `style:` string.
   // footer bar (weather / forecast / total). Everything off by default;
@@ -506,6 +529,15 @@ function normalizeConfig(config) {
   const normInverter = (v) => {
     const micro = !!v.micro;
     const brandOk = micro ? MICRO_INVERTERS[v.brand] : INVERTERS[v.brand];
+    const panelId = v.panelId || null;
+    // How this inverter's tile renders: the image+value tile (default), a
+    // compact text line, a list combining `entity` with `extra`, or nested
+    // as a small badge on its panel. "badge" (or the old `badge: true` flag)
+    // only takes effect while it actually has a panel to sit on.
+    let display = ["text", "extended", "badge"].includes(v.display) ? v.display : "image";
+    if (display === "image" && v.badge) display = "badge";
+    if (display === "badge" && !panelId) display = "image";
+    if (display === "image" && legacyHideImage) display = "text";
     return {
       id: v.id || uid(),
       x: Number(v.x) || 0,
@@ -514,11 +546,8 @@ function normalizeConfig(config) {
       brand: brandOk ? v.brand : (micro ? "enphase" : "goodwe"),
       entity: v.entity || "",
       label: v.label || "",
-      panelId: v.panelId || null,
-      badge: !!v.badge,
-      // how this inverter's tile renders: the image+value tile (default),
-      // a compact text line, or a list combining `entity` with `extra`
-      display: (v.display === "text" || v.display === "extended") ? v.display : "image",
+      panelId,
+      display,
       extra: Array.isArray(v.extra) ? v.extra.map(normExtra) : [],
     };
   };
@@ -571,7 +600,6 @@ function serializeConfig(cfg) {
   };
   if (cfg.inv_hide_label) out.inv_hide_label = true;
   if (cfg.inv_hide_sensor) out.inv_hide_sensor = true;
-  if (cfg.inv_hide_image) out.inv_hide_image = true;
   if (cfg.flow_dots === false) out.flow_dots = false;
   // Keep any card-mod styling the user set, so editing in the UI doesn't drop it.
   if (cfg.weather_entity) out.weather_entity = cfg.weather_entity;
@@ -693,7 +721,7 @@ class SolarLayoutCard extends HTMLElement {
   _bounds() {
     const l = this._layout();
     // badge-mode inverters are nested on their panel, not their own grid cell
-    const items = l.panels.concat((l.inverters || []).filter((v) => !v.badge));
+    const items = l.panels.concat((l.inverters || []).filter((v) => !isBadgeInverter(v, l.panels)));
     if (!items.length) return { cols: 8, rows: 6 };
     let cols = 0, rows = 0;
     for (const it of items) {
@@ -988,7 +1016,6 @@ class SolarLayoutCard extends HTMLElement {
 
     const hideLabel = this._config.inv_hide_label;
     const hideSensor = this._config.inv_hide_sensor;
-    const hideImage = this._config.inv_hide_image;
 
     // geometry helper: center of an item in grid-cell units (for line drawing)
     const centerOf = (it) => {
@@ -1035,10 +1062,10 @@ class SolarLayoutCard extends HTMLElement {
         const bg = colorFor(ratio, off, max);
         const fg = textColorFor(ratio, off, max);
         const warn = daytime && hasState && Number.isFinite(num) && num === 0;
-        // Micro-inverters attached to this panel with "show in picture" on render
-        // as a small badge nested in the panel itself, instead of a separate tile.
+        // Inverters set to display: "badge" render as a small badge nested
+        // in the panel itself, instead of a separate tile.
         const badgesHtml = (layout.inverters || [])
-          .filter((v) => v.badge && v.panelId === p.id)
+          .filter((v) => isBadgeInverter(v, layout.panels) && v.panelId === p.id)
           .map((v) => {
             const b = invMeta(v);
             const { val: bval, unit: bunit } = fmtAt(v.entity);
@@ -1054,7 +1081,7 @@ class SolarLayoutCard extends HTMLElement {
             const title = `${b.name}${v.label ? " " + v.label : ""}${bHasState ? `: ${bval} ${bunit}` : ""}${extraLines}`;
             return `<div class="inv-badge" data-id="${v.id}" data-entity="${v.entity}"
                  style="--inv:${b.color};" title="${escHtml(title)}">
-              ${hideImage ? "" : `<img class="inv-badge-img" src="${invImg(v)}" alt="${escHtml(b.name)}" />`}
+              <img class="inv-badge-img" src="${invImg(v)}" alt="${escHtml(b.name)}" />
             </div>`;
           })
           .join("");
@@ -1079,7 +1106,7 @@ class SolarLayoutCard extends HTMLElement {
 
     const invertersHtml = (layout.inverters || [])
       // badge-mode inverters are rendered nested inside their panel above
-      .filter((v) => !(v.badge && layout.panels.some((p) => p.id === v.panelId)))
+      .filter((v) => !isBadgeInverter(v, layout.panels))
       .map((v) => {
         const brand = invMeta(v);
         const dims = invDims(v);
@@ -1088,12 +1115,8 @@ class SolarLayoutCard extends HTMLElement {
         const num = numAt(v.entity);
         const showReading = !hideSensor && hasState;
         const reading = showReading ? `<div class="inv-reading">${escHtml(val)} ${escHtml(unit)}</div>` : "";
-        const image = hideImage
-          ? ""
-          : `<img class="inv-img" src="${invImg(v)}" alt="${escHtml(brand.name)}" />`;
+        const image = `<img class="inv-img" src="${invImg(v)}" alt="${escHtml(brand.name)}" />`;
         const labelHtml = (!hideLabel && v.label) ? `<div class="inv-label">${escHtml(v.label)}</div>` : "";
-        // brand name only shown as fallback when image is hidden
-        const brandHtml = hideImage ? `<div class="inv-brand">${brand.name}</div>` : "";
         // Sleep badge: mirror of the panel "!" warning. Show a Zzz when the sun
         // is down AND a linked sensor genuinely reads 0 (so it "sleeps" at night).
         const sleep = !daytime && hasState && Number.isFinite(num) && num === 0;
@@ -1124,7 +1147,7 @@ class SolarLayoutCard extends HTMLElement {
                 .join("")}</div>`
             : `<div class="inv-list inv-muted">—</div>`);
         } else {
-          bodyHtml = `${image}${brandHtml}${labelHtml}${reading}`;
+          bodyHtml = `${image}${labelHtml}${reading}`;
         }
         return `
           <div class="inverter${v.micro ? " micro" : ""} disp-${v.display}"
@@ -1848,7 +1871,7 @@ class SolarLayoutCardEditor extends HTMLElement {
         maxY = Math.max(maxY, p.y + h);
       });
       (l.inverters || []).forEach((v) => {
-        if (v.badge) return; // nested on its panel, not its own canvas spot
+        if (isBadgeInverter(v, l.panels)) return; // nested on its panel, not its own canvas spot
         const d = invDims(v);
         maxX = Math.max(maxX, v.x + d.w);
         maxY = Math.max(maxY, v.y + d.h);
@@ -1915,7 +1938,6 @@ class SolarLayoutCardEditor extends HTMLElement {
         <div class="field">
           <label>${_t("inv_display")}</label>
           <div class="checks">
-            <label class="chk"><input id="hide_image" type="checkbox" /> ${_t("hide_image")}</label>
             <label class="chk"><input id="hide_label" type="checkbox" /> ${_t("hide_label")}</label>
             <label class="chk"><input id="hide_sensor" type="checkbox" /> ${_t("hide_sensor")}</label>
             <label class="chk"><input id="flow_dots" type="checkbox" /> ${_t("flow_dots")}</label>
@@ -1965,7 +1987,6 @@ class SolarLayoutCardEditor extends HTMLElement {
     const maxEl = sr.getElementById("color_max");
     const zoomEl = sr.getElementById("zoom");
     const fontEl = sr.getElementById("font_scale");
-    const hImg = sr.getElementById("hide_image");
     const hLbl = sr.getElementById("hide_label");
     const hSen = sr.getElementById("hide_sensor");
     const fDots = sr.getElementById("flow_dots");
@@ -1975,7 +1996,6 @@ class SolarLayoutCardEditor extends HTMLElement {
     maxEl.value = this._config.color_max;
     zoomEl.value = this._layout().zoom != null ? this._layout().zoom : this._config.zoom;
     fontEl.value = this._config.font_scale;
-    hImg.checked = this._config.inv_hide_image;
     hLbl.checked = this._config.inv_hide_label;
     hSen.checked = this._config.inv_hide_sensor;
     fDots.checked = this._config.flow_dots !== false;
@@ -2005,7 +2025,6 @@ class SolarLayoutCardEditor extends HTMLElement {
       this._config.font_scale = clamp(Number(e.target.value) || 100, 50, 200);
       this._emit();
     });
-    hImg.addEventListener("change", (e) => { this._config.inv_hide_image = e.target.checked; this._emit(); });
     hLbl.addEventListener("change", (e) => { this._config.inv_hide_label = e.target.checked; this._emit(); });
     hSen.addEventListener("change", (e) => { this._config.inv_hide_sensor = e.target.checked; this._emit(); });
     fDots.addEventListener("change", (e) => { this._config.flow_dots = e.target.checked; this._emit(); });
@@ -2244,7 +2263,7 @@ class SolarLayoutCardEditor extends HTMLElement {
     const brand = invMeta(v);
     const dims = invDims(v);
     const el = document.createElement("div");
-    const isBadge = !!(v.badge && v.panelId);
+    const isBadge = isBadgeInverter(v, this._panels());
     el.className = "einv" + (v.micro ? " micro" : "") + (isBadge ? " badge" : "");
     el.dataset.id = v.id;
     el.dataset.kind = "inverter";
@@ -2266,11 +2285,11 @@ class SolarLayoutCardEditor extends HTMLElement {
   }
 
   // Create an inverter's DOM node and place it: nested inside its panel
-  // (bottom-right badge) when "show in picture" is on, otherwise as a
+  // (bottom-right badge) when display is "badge", otherwise as a
   // free-standing, draggable tile on the canvas.
   _appendInverterNode(v) {
     const el = this._makeInverterNode(v);
-    const panel = v.badge && v.panelId
+    const panel = isBadgeInverter(v, this._panels())
       ? this.shadowRoot.querySelector(`.epanel[data-id="${cssEsc(v.panelId)}"]`)
       : null;
     if (panel) {
@@ -2598,7 +2617,7 @@ class SolarLayoutCardEditor extends HTMLElement {
     const orphaned = this._inverters().filter((v) => v.panelId === id);
     orphaned.forEach((v) => {
       v.panelId = null;
-      v.badge = false;
+      if (v.display === "badge") v.display = "image";
       this._refreshInverterNode(v);
     });
     if (orphaned.length) this._renderInverterList();
@@ -2632,6 +2651,10 @@ class SolarLayoutCardEditor extends HTMLElement {
     extraBox.hidden = v.display !== "extended";
     const rebuildExtra = () => {
       extraBox.innerHTML = "";
+      const legend = document.createElement("div");
+      legend.className = "iextra-legend";
+      legend.textContent = t(this._hass, "extra_legend");
+      extraBox.appendChild(legend);
       (v.extra || []).forEach((ex) => {
         const exRow = document.createElement("div");
         exRow.className = "iextra-row";
@@ -2643,6 +2666,7 @@ class SolarLayoutCardEditor extends HTMLElement {
         exEnt.type = "text";
         exEnt.setAttribute("list", exListId);
         exEnt.placeholder = "zoek sensor...";
+        exEnt.title = t(this._hass, "extra_entity_title");
         exEnt.value = ex.entity || "";
         const exDatalist = document.createElement("datalist");
         exDatalist.id = exListId;
@@ -2723,18 +2747,25 @@ class SolarLayoutCardEditor extends HTMLElement {
     fillPanelOptions();
     panelSel.addEventListener("mousedown", fillPanelOptions);
 
-    // "Show in picture": nests the inverter as a small badge on its panel
-    // instead of a separate draggable/connectable tile. Only meaningful once
-    // a panel is chosen above.
-    const badgeChk = document.createElement("input");
-    badgeChk.type = "checkbox";
-    badgeChk.className = "badgechk";
-    badgeChk.title = t(this._hass, "show_in_picture_title");
-    badgeChk.checked = !!v.badge;
-    badgeChk.disabled = !v.panelId;
-    badgeChk.addEventListener("change", (e) => {
-      v.badge = e.target.checked;
-      if (v.badge) {
+    // Per-inverter display mode: full image tile, a compact text line, a
+    // list combining the main entity with "extended data" sensors, or a
+    // small badge nested on its panel (needs a panel picked above).
+    const dispSel = document.createElement("select");
+    dispSel.className = "dispsel";
+    dispSel.title = t(this._hass, "disp_title");
+    dispSel.innerHTML = [
+      ["image", "disp_image"],
+      ["text", "disp_text"],
+      ["extended", "disp_extended"],
+      ["badge", "disp_badge"],
+    ].map(([val, key]) => `<option value="${val}">${escHtml(t(this._hass, key))}</option>`).join("");
+    dispSel.value = v.display || "image";
+    const badgeOpt = dispSel.querySelector('option[value="badge"]');
+    if (badgeOpt) badgeOpt.disabled = !v.panelId;
+    dispSel.addEventListener("change", (e) => {
+      v.display = e.target.value;
+      extraBox.hidden = v.display !== "extended";
+      if (v.display === "badge") {
         // a badge is nested inside its panel, so any wires pointing at this
         // inverter's old free-standing tile would otherwise dangle.
         const l = this._layout();
@@ -2754,36 +2785,19 @@ class SolarLayoutCardEditor extends HTMLElement {
         this._placeOnPanel(v, e.target.value);
       } else {
         v.panelId = null;
-        if (v.badge) {
-          v.badge = false;
-          badgeChk.checked = false;
+        if (v.display === "badge") {
+          v.display = "image";
+          dispSel.value = "image";
         }
         this._refreshInverterNode(v);
         this._emit();
       }
-      badgeChk.disabled = !v.panelId;
-    });
-
-    // Per-inverter display mode: full image tile, a compact text line, or
-    // a list combining the main entity with the "extended data" sensors.
-    const dispSel = document.createElement("select");
-    dispSel.className = "dispsel";
-    dispSel.title = t(this._hass, "disp_title");
-    dispSel.innerHTML = [
-      ["image", "disp_image"],
-      ["text", "disp_text"],
-      ["extended", "disp_extended"],
-    ].map(([val, key]) => `<option value="${val}">${escHtml(t(this._hass, key))}</option>`).join("");
-    dispSel.value = v.display || "image";
-    dispSel.addEventListener("change", (e) => {
-      v.display = e.target.value;
-      extraBox.hidden = v.display !== "extended";
-      this._refreshInverterNode(v);
-      this._emit();
+      if (badgeOpt) badgeOpt.disabled = !v.panelId;
     });
 
     const brand = document.createElement("select");
     brand.className = "brand";
+    brand.title = t(this._hass, "brand_title");
     brand.innerHTML = Object.keys(brandMap)
       .map((k) => `<option value="${k}">${brandMap[k].name}</option>`)
       .join("");
@@ -2804,6 +2818,7 @@ class SolarLayoutCardEditor extends HTMLElement {
     lbl.className = "lbl";
     lbl.type = "text";
     lbl.placeholder = "label";
+    lbl.title = t(this._hass, "inv_label_title");
     lbl.value = v.label || "";
     lbl.addEventListener("input", (e) => {
       v.label = e.target.value;
@@ -2815,7 +2830,8 @@ class SolarLayoutCardEditor extends HTMLElement {
     ent.className = "ent";
     ent.type = "text";
     ent.setAttribute("list", listId);
-    ent.placeholder = "zoek sensor (optioneel)...";
+    ent.placeholder = t(this._hass, "inv_main_entity_ph");
+    ent.title = t(this._hass, "inv_main_entity_title");
     ent.value = v.entity || "";
     const datalist = document.createElement("datalist");
     datalist.id = listId;
@@ -2835,7 +2851,7 @@ class SolarLayoutCardEditor extends HTMLElement {
     del.textContent = "✕";
     del.addEventListener("click", () => this._removeInverter(v.id));
 
-    row.append(kind, panelSel, badgeChk, dispSel, brand, lbl, ent, datalist, del);
+    row.append(kind, panelSel, dispSel, brand, lbl, ent, datalist, del);
 
     const wrap = document.createElement("div");
     wrap.className = "irow-wrap";
@@ -2853,7 +2869,6 @@ class SolarLayoutCardEditor extends HTMLElement {
       entity: "",
       label: "",
       panelId: null,
-      badge: false,
       display: "image",
       extra: [],
     };
@@ -2883,7 +2898,7 @@ class SolarLayoutCardEditor extends HTMLElement {
     v.x = x;
     v.y = y;
     v.panelId = panelId;
-    if (v.badge) {
+    if (v.display === "badge") {
       // badge nodes live nested inside their panel's DOM node, so moving
       // panel means re-parenting rather than just sliding left/top.
       this._refreshInverterNode(v);
@@ -3077,9 +3092,8 @@ class SolarLayoutCardEditor extends HTMLElement {
       .prow .lbl { width:100%; }
       .prow .wp { width:100%; text-align:right; }
       .prow button { cursor:pointer; }
-      .irow { display:grid; grid-template-columns: 46px 100px 18px 100px 110px 84px 1fr auto; gap:6px; align-items:center; }
-      .irow .badgechk { cursor:pointer; width:16px; height:16px; margin:0; }
-      .irow .badgechk:disabled { opacity:.35; cursor:default; }
+      .irow { display:grid; grid-template-columns: 46px 100px 110px 110px 84px 1fr auto; gap:6px; align-items:center; }
+      .iextra-legend { font-size:.72rem; color:var(--secondary-text-color); }
       .iextra {
         display:flex; flex-direction:column; gap:6px;
         margin:2px 0 4px 52px; padding:6px 0 0; border-top:1px dashed var(--divider-color,#444);

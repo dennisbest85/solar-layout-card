@@ -1,7 +1,7 @@
 # Solar Layout Card
 
 ![hacs](https://img.shields.io/badge/HACS-Dashboard-41BDF5.svg)
-![version](https://img.shields.io/badge/version-1.6.0-f4c40f.svg)
+![version](https://img.shields.io/badge/version-1.7.0-f4c40f.svg)
 
 **English** · [Nederlands](#nederlands)
 
@@ -87,7 +87,6 @@ panels:
 | `font_scale`| number | `100`     | Text size in percent (50 to 200). |
 | `panels`    | list   | `[]`      | Panels (single layout). |
 | `inverters` | list   | `[]`      | Inverters and micro-inverters (single layout). |
-| `inv_hide_image` | bool | `false` | Hide the inverter image (all inverters). |
 | `inv_hide_label` | bool | `false` | Hide the inverter label. |
 | `inv_hide_sensor`| bool | `false` | Hide the inverter sensor value. |
 | `flow_dots`  | bool | `true`  | Toggle the moving dots along the connection lines. |
@@ -101,24 +100,24 @@ panels:
 Per panel: `id`, `x`, `y` (grid coordinates), `orientation` (`portrait`/`landscape`),
 `entity` (Watt sensor), `wp` (peak power of this panel, for the colour scale), `label`.
 
-Per inverter: `id`, `x`, `y`, `brand`, `entity` (optional), `label`. Set `micro: true` for
-a micro-inverter; the brand is then one of `enphase`, `apsystems`, `growatt`, `hoymiles`.
-Without `micro` it is a string inverter (`goodwe`, `solaredge`, `growatt`, `solis`, `sunsynk`).
+Per inverter: `id`, `x`, `y`, `brand`, `entity` (the main sensor, optional), `label`. Set
+`micro: true` for a micro-inverter; the brand is then one of `enphase`, `apsystems`,
+`growatt`, `hoymiles`. Without `micro` it is a string inverter (`goodwe`, `solaredge`,
+`growatt`, `solis`, `sunsynk`).
+
 In the visual editor you can pick a panel from the "Attach to panel…" dropdown on an
 inverter row to snap it just below that panel instead of positioning it by hand; this
-sets an optional `panelId` on the inverter (which YAML users can ignore). Once a panel
-is chosen, the "Show in picture" checkbox nests the inverter as a small badge in the
-corner of that panel (name and reading shown on hover) instead of a separate tile; this
-sets an optional `badge: true`. Any wires to/from that inverter are removed when you
-turn badge mode on, since it's then part of the panel rather than a separate node.
+sets an optional `panelId` on the inverter (which YAML users can ignore).
 
-Each inverter also has a display mode, `display`: `image` (default; the usual picture
-tile), `text` (a compact `label: value` line, no picture — handy if you'd rather not
-repeat the brand image for every sensor), or `extended` (a small list combining `entity`
-with an `extra` array of `{ id, entity, label }` sensors, for showing several readings —
-e.g. frequency, current, voltage — from one physical inverter without adding a separate
-tile per sensor). In the editor this is the "display" dropdown on the inverter row; picking
-"Extended data" reveals an inline "+ sensor" list to add the extra entities.
+Each inverter also has a `display` mode, chosen from the same row: `image` (default; the
+usual picture tile), `text` (a compact `label: value` line, no picture), `extended` (a
+small list combining `entity` with an `extra` array of `{ id, entity, label }` sensors —
+for showing several readings, e.g. frequency, current, voltage, from one physical inverter
+without a separate tile per sensor; picking it reveals an inline "+ sensor" list in the
+editor), or `badge` (nests the inverter as a small badge in the corner of its panel — name
+and every reading shown on hover — instead of a separate tile; only takes effect once a
+panel is attached above, and any wires to/from that inverter are dropped since it becomes
+part of the panel rather than a separate node).
 
 If an inverter has a sensor that reads 0 while the sun is down, a small sleep icon (Zzz)
 appears on the inverter. This mirrors the red 0 W warning that panels get during the day.
@@ -250,7 +249,6 @@ panels:
 | `font_scale`| number | `100`     | Tekstgrootte in procent (50 tot 200). |
 | `panels`    | list   | `[]`      | Panelen (enkel legplan). |
 | `inverters` | list   | `[]`      | Omvormers en micro-omvormers (enkel legplan). |
-| `inv_hide_image` | bool | `false` | Verberg de omvormer-afbeelding (alle omvormers). |
 | `inv_hide_label` | bool | `false` | Verberg het omvormer-label. |
 | `inv_hide_sensor`| bool | `false` | Verberg de omvormer-sensorwaarde. |
 | `flow_dots`  | bool | `true`  | Bewegende bolletjes over de verbindingslijnen aan/uit. |
@@ -264,25 +262,25 @@ panels:
 Per paneel: `id`, `x`, `y` (rastercoordinaten), `orientation` (`portrait`/`landscape`),
 `entity` (Watt-sensor), `wp` (piekvermogen van dit paneel, voor de kleurschaal), `label`.
 
-Per omvormer: `id`, `x`, `y`, `brand`, `entity` (optioneel), `label`. Zet `micro: true` voor
-een micro-omvormer; het merk is dan een van `enphase`, `apsystems`, `growatt`, `hoymiles`.
-Zonder `micro` is het een string-omvormer (`goodwe`, `solaredge`, `growatt`, `solis`, `sunsynk`).
+Per omvormer: `id`, `x`, `y`, `brand`, `entity` (de hoofdsensor, optioneel), `label`. Zet
+`micro: true` voor een micro-omvormer; het merk is dan een van `enphase`, `apsystems`,
+`growatt`, `hoymiles`. Zonder `micro` is het een string-omvormer (`goodwe`, `solaredge`,
+`growatt`, `solis`, `sunsynk`).
+
 In de visuele editor kun je bij een omvormer-rij een paneel kiezen via "Koppel aan paneel…",
 waarna de omvormer direct onder dat paneel springt in plaats van dat je hem handmatig moet
 positioneren; dit zet een optionele `panelId` op de omvormer (voor YAML-gebruikers niet relevant).
-Zodra er een paneel gekoppeld is, plaatst het "Toon in beeld"-vinkje de omvormer als klein
-badge-icoontje in de hoek van dat paneel (naam en waarde als tooltip bij hover) in plaats van
-als los vak; dit zet een optionele `badge: true`. Eventuele bedradingslijnen naar die omvormer
-worden verwijderd zodra je deze stand aanzet, omdat de omvormer dan bij het paneel hoort.
 
-Elke omvormer heeft ook een weergavemodus, `display`: `image` (standaard; de gebruikelijke
-afbeeldingstegel), `text` (een compacte "label: waarde"-regel, zonder afbeelding — handig
-als je niet voor elke sensor hetzelfde merk-plaatje wilt herhalen), of `extended` (een klein
-lijstje dat `entity` combineert met een `extra`-array van `{ id, entity, label }`-sensoren,
-om meerdere metingen — bijvoorbeeld frequentie, stroom, spanning — van één fysieke omvormer
-te tonen zonder per sensor een aparte tegel toe te voegen). In de editor is dit de
-"weergave"-keuzelijst op de omvormer-rij; kies je "Uitgebreide gegevens", dan verschijnt
-er inline een "+ sensor"-lijstje om de extra entities toe te voegen.
+Elke omvormer heeft ook een `display`-modus, te kiezen op diezelfde rij: `image` (standaard;
+de gebruikelijke afbeeldingstegel), `text` (een compacte "label: waarde"-regel, zonder
+afbeelding), `extended` (een klein lijstje dat `entity` combineert met een `extra`-array van
+`{ id, entity, label }`-sensoren — om meerdere metingen, bijv. frequentie, stroom, spanning,
+van één fysieke omvormer te tonen zonder per sensor een aparte tegel; kies je deze optie,
+dan verschijnt in de editor inline een "+ sensor"-lijstje), of `badge` (nestelt de omvormer
+als klein badge-icoontje in de hoek van zijn paneel — naam en alle waarden als tooltip bij
+hover — in plaats van een los vak; werkt alleen zodra er hierboven een paneel gekoppeld is,
+en eventuele bedradingslijnen naar die omvormer worden dan verwijderd omdat hij nu bij het
+paneel hoort in plaats van een los element te zijn).
 
 Als een omvormer een sensor heeft die 0 meet terwijl de zon onder is, verschijnt er een
 klein slaap-icoon (Zzz) op de omvormer. Dit is het spiegelbeeld van de rode 0 W-waarschuwing
