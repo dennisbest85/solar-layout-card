@@ -4,6 +4,10 @@ Alle noemenswaardige wijzigingen aan deze card worden hier bijgehouden.
 Formaat volgt [Keep a Changelog](https://keepachangelog.com/) en
 [Semantic Versioning](https://semver.org/).
 
+## [1.5.0] - 2026-09-02
+### Toegevoegd
+- Editor: naast "Koppel aan paneel…" staat nu een "Toon in beeld"-vinkje bij een omvormer/micro-omvormer. Wordt dit aangezet, dan verschijnt de omvormer als klein badge-icoontje rechtsonder in het paneel zelf (met naam/waarde als tooltip) in plaats van als los vak ernaast. Losse bedradingslijnen naar die omvormer worden dan automatisch verwijderd, omdat de omvormer nu bij het paneel hoort.
+
 ## [1.4.0] - 2026-09-02
 ### Toegevoegd
 - Editor: bij een inverter of micro-inverter kun je nu een paneel kiezen uit een keuzelijst ("Koppel aan paneel…"). De inverter springt dan direct onder dat paneel op het canvas, in plaats van dat alles op elkaar gestapeld bij paneel 1 belandt. Je kunt hem daarna nog altijd handmatig verslepen.

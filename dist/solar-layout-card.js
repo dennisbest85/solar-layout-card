@@ -1,5 +1,5 @@
-/*! solar-layout-card v1.4.0 | MIT License */
-const VERSION = "1.4.0";
+/*! solar-layout-card v1.5.0 | MIT License */
+const VERSION = "1.5.0";
 
 /* ---------- i18n ----------
  * Follows Home Assistant's UI language (hass.language). Supported: nl, de, en.
@@ -82,6 +82,7 @@ const TRANSLATIONS = {
     panel_label: "Panel",
     attach_panel: "Attach to panel…",
     attach_panel_title: "Place this inverter on/below a panel",
+    show_in_picture_title: "Show in picture: nest this inverter as a badge on its panel instead of a separate tile",
   },
   nl: {
     title_default: "Zonnepanelen",
@@ -152,6 +153,7 @@ const TRANSLATIONS = {
     panel_label: "Paneel",
     attach_panel: "Koppel aan paneel…",
     attach_panel_title: "Plaats deze omvormer op/onder een paneel",
+    show_in_picture_title: "Toon in beeld: plaats deze omvormer als badge op het paneel in plaats van als los vak",
   },
   de: {
     title_default: "Solarmodule",
@@ -222,6 +224,7 @@ const TRANSLATIONS = {
     panel_label: "Modul",
     attach_panel: "An Modul anhängen…",
     attach_panel_title: "Diesen Wechselrichter auf/unter einem Modul platzieren",
+    show_in_picture_title: "Im Bild anzeigen: diesen Wechselrichter als Badge auf dem Modul statt als eigene Kachel anzeigen",
   },
 };
 function langOf(hass) {
@@ -654,7 +657,8 @@ class SolarLayoutCard extends HTMLElement {
 
   _bounds() {
     const l = this._layout();
-    const items = l.panels.concat(l.inverters || []);
+    // badge-mode inverters are nested on their panel, not their own grid cell
+    const items = l.panels.concat((l.inverters || []).filter((v) => !v.badge));
     if (!items.length) return { cols: 8, rows: 6 };
     let cols = 0, rows = 0;
     for (const it of items) {
@@ -996,6 +1000,21 @@ class SolarLayoutCard extends HTMLElement {
         const bg = colorFor(ratio, off, max);
         const fg = textColorFor(ratio, off, max);
         const warn = daytime && hasState && Number.isFinite(num) && num === 0;
+        // Micro-inverters attached to this panel with "show in picture" on render
+        // as a small badge nested in the panel itself, instead of a separate tile.
+        const badgesHtml = (layout.inverters || [])
+          .filter((v) => v.badge && v.panelId === p.id)
+          .map((v) => {
+            const b = invMeta(v);
+            const { val: bval, unit: bunit } = fmtAt(v.entity);
+            const bHasState = hasStateAt(v.entity);
+            const title = `${b.name}${v.label ? " " + v.label : ""}${bHasState ? `: ${bval} ${bunit}` : ""}`;
+            return `<div class="inv-badge" data-id="${v.id}" data-entity="${v.entity}"
+                 style="--inv:${b.color};" title="${escHtml(title)}">
+              ${hideImage ? "" : `<img class="inv-badge-img" src="${invImg(v)}" alt="${escHtml(b.name)}" />`}
+            </div>`;
+          })
+          .join("");
         return `
           <div class="panel ${p.orientation}"
                style="grid-column:${p.x + 1}/span ${w};
@@ -1010,11 +1029,14 @@ class SolarLayoutCard extends HTMLElement {
             </div>
             ${p.label ? `<div class="plabel">${escHtml(p.label)}</div>` : ""}
             ${warn ? `<div class="warn" title="${t(hass, "warn_zero_day")}">!</div>` : ""}
+            ${badgesHtml}
           </div>`;
       })
       .join("");
 
     const invertersHtml = (layout.inverters || [])
+      // badge-mode inverters are rendered nested inside their panel above
+      .filter((v) => !(v.badge && layout.panels.some((p) => p.id === v.panelId)))
       .map((v) => {
         const brand = invMeta(v);
         const dims = invDims(v);
@@ -1613,6 +1635,18 @@ class SolarLayoutCard extends HTMLElement {
         line-height: ${Math.max(14, Math.round(16 * (fontScale || 1)))}px;
         box-shadow: 0 0 0 1px rgba(255,255,255,0.15);
       }
+      /* Micro-inverter shown "in picture": a small badge nested on the panel
+         itself (bottom-right corner) instead of a separate tile. */
+      .inv-badge {
+        position: absolute; bottom: 2px; right: 3px; z-index: 3;
+        width: ${Math.max(16, Math.round(20 * (fontScale || 1)))}px;
+        height: ${Math.max(16, Math.round(20 * (fontScale || 1)))}px;
+        border-radius: 50%; background: var(--card-background-color, #1a1a1a);
+        box-shadow: 0 0 0 1px rgba(255,255,255,0.25);
+        display: flex; align-items: center; justify-content: center;
+        overflow: hidden; padding: 2px;
+      }
+      .inv-badge-img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
     `;
   }
 }
@@ -1728,6 +1762,7 @@ class SolarLayoutCardEditor extends HTMLElement {
         maxY = Math.max(maxY, p.y + h);
       });
       (l.inverters || []).forEach((v) => {
+        if (v.badge) return; // nested on its panel, not its own canvas spot
         const d = invDims(v);
         maxX = Math.max(maxX, v.x + d.w);
         maxY = Math.max(maxY, v.y + d.h);
@@ -2067,7 +2102,7 @@ class SolarLayoutCardEditor extends HTMLElement {
     // connection overlay first (behind nodes)
     canvas.appendChild(this._makeConnSvg());
     this._panels().forEach((p) => canvas.appendChild(this._makePanelNode(p)));
-    this._inverters().forEach((v) => canvas.appendChild(this._makeInverterNode(v)));
+    this._inverters().forEach((v) => this._appendInverterNode(v));
     this._applyCanvasSize();
   }
 
@@ -2123,18 +2158,48 @@ class SolarLayoutCardEditor extends HTMLElement {
     const brand = invMeta(v);
     const dims = invDims(v);
     const el = document.createElement("div");
-    el.className = "einv" + (v.micro ? " micro" : "");
+    const isBadge = !!(v.badge && v.panelId);
+    el.className = "einv" + (v.micro ? " micro" : "") + (isBadge ? " badge" : "");
     el.dataset.id = v.id;
     el.dataset.kind = "inverter";
-    el.style.left = v.x * GRID + "px";
-    el.style.top = v.y * GRID + "px";
-    el.style.width = dims.w * GRID + "px";
-    el.style.height = dims.h * GRID + "px";
+    if (isBadge) {
+      el.title = `${brand.name}${v.label ? " " + v.label : ""}`;
+    } else {
+      el.style.left = v.x * GRID + "px";
+      el.style.top = v.y * GRID + "px";
+      el.style.width = dims.w * GRID + "px";
+      el.style.height = dims.h * GRID + "px";
+    }
     el.style.setProperty("--inv", brand.color);
     el.innerHTML = `<img class="einv-img" src="${invImg(v)}" alt="${brand.name}" />`;
-    this._attachDrag(el);
-    this._attachConnectClick(el);
+    if (!isBadge) {
+      this._attachDrag(el);
+      this._attachConnectClick(el);
+    }
     return el;
+  }
+
+  // Create an inverter's DOM node and place it: nested inside its panel
+  // (bottom-right badge) when "show in picture" is on, otherwise as a
+  // free-standing, draggable tile on the canvas.
+  _appendInverterNode(v) {
+    const el = this._makeInverterNode(v);
+    const panel = v.badge && v.panelId
+      ? this.shadowRoot.querySelector(`.epanel[data-id="${cssEsc(v.panelId)}"]`)
+      : null;
+    if (panel) {
+      panel.appendChild(el);
+    } else {
+      const canvas = this.shadowRoot.getElementById("canvas");
+      if (canvas) canvas.appendChild(el);
+    }
+    return el;
+  }
+
+  _refreshInverterNode(v) {
+    const old = this._canvasNode(v.id);
+    if (old) old.remove();
+    this._appendInverterNode(v);
   }
 
   _makePanelNode(p) {
@@ -2442,6 +2507,15 @@ class SolarLayoutCardEditor extends HTMLElement {
     if (node) node.remove();
     const row = this.shadowRoot.querySelector(`.prow[data-id="${id}"]`);
     if (row) row.remove();
+    // any inverter attached to (or badged on) this panel loses that link;
+    // badge nodes were nested in the panel's DOM and just got removed with it
+    const orphaned = this._inverters().filter((v) => v.panelId === id);
+    orphaned.forEach((v) => {
+      v.panelId = null;
+      v.badge = false;
+      this._refreshInverterNode(v);
+    });
+    if (orphaned.length) this._renderInverterList();
     this._renderConnList();
     this._redrawConnections();
     this._emit();
@@ -2486,8 +2560,46 @@ class SolarLayoutCardEditor extends HTMLElement {
     };
     fillPanelOptions();
     panelSel.addEventListener("mousedown", fillPanelOptions);
+
+    // "Show in picture": nests the inverter as a small badge on its panel
+    // instead of a separate draggable/connectable tile. Only meaningful once
+    // a panel is chosen above.
+    const badgeChk = document.createElement("input");
+    badgeChk.type = "checkbox";
+    badgeChk.className = "badgechk";
+    badgeChk.title = t(this._hass, "show_in_picture_title");
+    badgeChk.checked = !!v.badge;
+    badgeChk.disabled = !v.panelId;
+    badgeChk.addEventListener("change", (e) => {
+      v.badge = e.target.checked;
+      if (v.badge) {
+        // a badge is nested inside its panel, so any wires pointing at this
+        // inverter's old free-standing tile would otherwise dangle.
+        const l = this._layout();
+        const before = (l.connections || []).length;
+        l.connections = (l.connections || []).filter((c) => c.from !== v.id && c.to !== v.id);
+        if ((l.connections || []).length !== before) {
+          this._renderConnList();
+          this._redrawConnections();
+        }
+      }
+      this._refreshInverterNode(v);
+      this._emit();
+    });
+
     panelSel.addEventListener("change", (e) => {
-      if (e.target.value) this._placeOnPanel(v, e.target.value);
+      if (e.target.value) {
+        this._placeOnPanel(v, e.target.value);
+      } else {
+        v.panelId = null;
+        if (v.badge) {
+          v.badge = false;
+          badgeChk.checked = false;
+        }
+        this._refreshInverterNode(v);
+        this._emit();
+      }
+      badgeChk.disabled = !v.panelId;
     });
 
     const brand = document.createElement("select");
@@ -2543,7 +2655,7 @@ class SolarLayoutCardEditor extends HTMLElement {
     del.textContent = "✕";
     del.addEventListener("click", () => this._removeInverter(v.id));
 
-    row.append(kind, panelSel, brand, lbl, ent, datalist, del);
+    row.append(kind, panelSel, badgeChk, brand, lbl, ent, datalist, del);
     return row;
   }
 
@@ -2556,10 +2668,10 @@ class SolarLayoutCardEditor extends HTMLElement {
       entity: "",
       label: "",
       panelId: null,
+      badge: false,
     };
     this._inverters().push(v);
-    const canvas = this.shadowRoot.getElementById("canvas");
-    if (canvas) canvas.appendChild(this._makeInverterNode(v));
+    this._appendInverterNode(v);
     this._applyCanvasSize();
     const list = this.shadowRoot.getElementById("invlist");
     if (list) {
@@ -2584,10 +2696,16 @@ class SolarLayoutCardEditor extends HTMLElement {
     v.x = x;
     v.y = y;
     v.panelId = panelId;
-    const node = this._canvasNode(v.id);
-    if (node) {
-      node.style.left = x * GRID + "px";
-      node.style.top = y * GRID + "px";
+    if (v.badge) {
+      // badge nodes live nested inside their panel's DOM node, so moving
+      // panel means re-parenting rather than just sliding left/top.
+      this._refreshInverterNode(v);
+    } else {
+      const node = this._canvasNode(v.id);
+      if (node) {
+        node.style.left = x * GRID + "px";
+        node.style.top = y * GRID + "px";
+      }
     }
     this._applyCanvasSize();
     this._emit();
@@ -2761,6 +2879,10 @@ class SolarLayoutCardEditor extends HTMLElement {
       }
       .einv.dragging { cursor:grabbing; filter:brightness(1.1); z-index:5; box-shadow:0 2px 8px rgba(0,0,0,.3); }
       .einv.micro { border:1px dashed rgba(255,255,255,0.25); }
+      .einv.badge {
+        left:auto; top:auto; right:2px; bottom:2px; width:16px; height:16px;
+        border-radius:50%; border:1px solid rgba(255,255,255,.4); cursor:default; z-index:3;
+      }
       .einv-img { width:100%; height:100%; object-fit:contain; pointer-events:none; }
       .list { display:flex; flex-direction:column; gap:6px; }
       .prow { display:grid; grid-template-columns: 55px 1fr 62px auto auto auto; gap:6px; align-items:center; }
@@ -2768,7 +2890,9 @@ class SolarLayoutCardEditor extends HTMLElement {
       .prow .lbl { width:100%; }
       .prow .wp { width:100%; text-align:right; }
       .prow button { cursor:pointer; }
-      .irow { display:grid; grid-template-columns: 46px 100px 110px 84px 1fr auto; gap:6px; align-items:center; }
+      .irow { display:grid; grid-template-columns: 46px 100px 18px 110px 84px 1fr auto; gap:6px; align-items:center; }
+      .irow .badgechk { cursor:pointer; width:16px; height:16px; margin:0; }
+      .irow .badgechk:disabled { opacity:.35; cursor:default; }
       .irow .ikind {
         font-size:.68rem; text-align:center; padding:2px 0; border-radius:5px;
         background:var(--secondary-background-color,#333); color:var(--secondary-text-color);

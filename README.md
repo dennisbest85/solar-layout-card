@@ -1,7 +1,7 @@
 # Solar Layout Card
 
 ![hacs](https://img.shields.io/badge/HACS-Dashboard-41BDF5.svg)
-![version](https://img.shields.io/badge/version-1.4.0-f4c40f.svg)
+![version](https://img.shields.io/badge/version-1.5.0-f4c40f.svg)
 
 **English** · [Nederlands](#nederlands)
 
@@ -106,7 +106,11 @@ a micro-inverter; the brand is then one of `enphase`, `apsystems`, `growatt`, `h
 Without `micro` it is a string inverter (`goodwe`, `solaredge`, `growatt`, `solis`, `sunsynk`).
 In the visual editor you can pick a panel from the "Attach to panel…" dropdown on an
 inverter row to snap it just below that panel instead of positioning it by hand; this
-sets an optional `panelId` on the inverter (which YAML users can ignore).
+sets an optional `panelId` on the inverter (which YAML users can ignore). Once a panel
+is chosen, the "Show in picture" checkbox nests the inverter as a small badge in the
+corner of that panel (name and reading shown on hover) instead of a separate tile; this
+sets an optional `badge: true`. Any wires to/from that inverter are removed when you
+turn badge mode on, since it's then part of the panel rather than a separate node.
 
 If an inverter has a sensor that reads 0 while the sun is down, a small sleep icon (Zzz)
 appears on the inverter. This mirrors the red 0 W warning that panels get during the day.
@@ -258,6 +262,10 @@ Zonder `micro` is het een string-omvormer (`goodwe`, `solaredge`, `growatt`, `so
 In de visuele editor kun je bij een omvormer-rij een paneel kiezen via "Koppel aan paneel…",
 waarna de omvormer direct onder dat paneel springt in plaats van dat je hem handmatig moet
 positioneren; dit zet een optionele `panelId` op de omvormer (voor YAML-gebruikers niet relevant).
+Zodra er een paneel gekoppeld is, plaatst het "Toon in beeld"-vinkje de omvormer als klein
+badge-icoontje in de hoek van dat paneel (naam en waarde als tooltip bij hover) in plaats van
+als los vak; dit zet een optionele `badge: true`. Eventuele bedradingslijnen naar die omvormer
+worden verwijderd zodra je deze stand aanzet, omdat de omvormer dan bij het paneel hoort.
 
 Als een omvormer een sensor heeft die 0 meet terwijl de zon onder is, verschijnt er een
 klein slaap-icoon (Zzz) op de omvormer. Dit is het spiegelbeeld van de rode 0 W-waarschuwing
