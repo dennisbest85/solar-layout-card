@@ -1,5 +1,5 @@
-/*! solar-layout-card v1.10.1 | MIT License */
-const VERSION = "1.10.1";
+/*! solar-layout-card v1.11.0 | MIT License */
+const VERSION = "1.11.0";
 
 /* ---------- i18n ----------
  * Follows Home Assistant's UI language (hass.language). Supported: nl, de, en.
@@ -86,22 +86,21 @@ const TRANSLATIONS = {
     attach_panel_title: "Which panel this inverter belongs to. Placing it snaps it just below that panel; pick \"Badge on panel\" below to nest it on the panel instead",
     disp_image: "Image",
     disp_text: "Text",
-    disp_extended: "Extended data",
     disp_badge: "Badge on panel",
     disp_merge: "Merge with panel",
-    disp_title: "How this inverter is shown: a picture tile, a compact text line, a list of several sensors, a small badge nested on its panel, or merged into that panel's own Watt reading (badge/merge need a panel picked above)",
+    disp_title: "How this inverter is shown: a picture tile, a compact text line, a small badge nested on its panel, or merged (with any extra sensors) into that panel's own Watt reading (badge/merge need a panel picked above)",
     brand_title: "Brand: sets the picture and accent colour",
-    inv_label_title: "Optional label, shown on the tile/badge and as the heading above extended data",
+    inv_label_title: "Optional label, shown on the tile/badge and as a prefix on this sensor's line when merged into a panel",
     inv_main_entity_ph: "main sensor (optional)...",
-    inv_main_entity_title: "The main sensor for this inverter — its value is what \"Image\"/\"Text\" mode shows, and the first line in \"Extended data\"",
+    inv_main_entity_title: "The main sensor for this inverter — its value is what \"Image\"/\"Text\" mode shows, and the first line when merged into a panel",
     add_extra: "+ sensor",
     remove_extra: "remove sensor",
     move_up: "Move up",
     move_down: "Move down",
     extra_legend: "Extra sensors shown together with the main sensor above:",
-    extra_entity_title: "An additional sensor to include in the extended-data list",
-    add_inv_help: "Add an inverter with a live sensor. Per inverter you can pick how it's shown: an image, a compact text line, a list of several sensors (extended data), or a small badge nested on its panel — see the display dropdown on its row.",
-    add_micro_help: "Add a micro-inverter (small unit mounted per panel). Per micro-inverter you can pick how it's shown: an image, a compact text line, a list of several sensors (extended data), or a small badge nested on its panel — see the display dropdown on its row.",
+    extra_entity_title: "An additional sensor to include when merged into the panel",
+    add_inv_help: "Add an inverter with a live sensor. Per inverter you can pick how it's shown: an image, a compact text line, a small badge nested on its panel, or merged into that panel's own reading — see the display dropdown on its row.",
+    add_micro_help: "Add a micro-inverter (small unit mounted per panel). Per micro-inverter you can pick how it's shown: an image, a compact text line, a small badge nested on its panel, or merged into that panel's own reading — see the display dropdown on its row.",
   },
   nl: {
     title_default: "Zonnepanelen",
@@ -176,22 +175,21 @@ const TRANSLATIONS = {
     attach_panel_title: "Bij welk paneel deze omvormer hoort. Koppelen zet hem direct onder dat paneel; kies hieronder \"Badge op paneel\" om hem juist óp het paneel te nestelen",
     disp_image: "Afbeelding",
     disp_text: "Tekst",
-    disp_extended: "Uitgebreide gegevens",
     disp_badge: "Badge op paneel",
     disp_merge: "Samenvoegen met paneel",
-    disp_title: "Hoe deze omvormer wordt getoond: een afbeeldingstegel, een compacte tekstregel, een lijst met meerdere sensoren, een klein badge genesteld op het paneel, of samengevoegd met de Watt-waarde van dat paneel (badge/samenvoegen vereisen eerst een gekoppeld paneel hierboven)",
+    disp_title: "Hoe deze omvormer wordt getoond: een afbeeldingstegel, een compacte tekstregel, een klein badge genesteld op het paneel, of samengevoegd (met eventuele extra sensoren) met de Watt-waarde van dat paneel (badge/samenvoegen vereisen eerst een gekoppeld paneel hierboven)",
     brand_title: "Merk: bepaalt de afbeelding en accentkleur",
-    inv_label_title: "Optioneel label, getoond op de tegel/badge en als kopje boven uitgebreide gegevens",
+    inv_label_title: "Optioneel label, getoond op de tegel/badge en als voorvoegsel bij deze sensor wanneer samengevoegd met een paneel",
     inv_main_entity_ph: "hoofdsensor (optioneel)...",
-    inv_main_entity_title: "De hoofdsensor van deze omvormer — de waarde die \"Afbeelding\"/\"Tekst\" toont, en de eerste regel bij \"Uitgebreide gegevens\"",
+    inv_main_entity_title: "De hoofdsensor van deze omvormer — de waarde die \"Afbeelding\"/\"Tekst\" toont, en de eerste regel bij samenvoegen met een paneel",
     add_extra: "+ sensor",
     remove_extra: "sensor verwijderen",
     move_up: "Omhoog verplaatsen",
     move_down: "Omlaag verplaatsen",
     extra_legend: "Extra sensoren, getoond naast de hoofdsensor hierboven:",
-    extra_entity_title: "Een extra sensor om toe te voegen aan het lijstje bij uitgebreide gegevens",
-    add_inv_help: "Voeg een omvormer met een live sensor toe. Per omvormer kun je kiezen hoe hij getoond wordt: een afbeelding, een compacte tekstregel, een lijst met meerdere sensoren (uitgebreide gegevens), of een klein badge op het paneel — zie de weergave-keuzelijst op die rij.",
-    add_micro_help: "Voeg een micro-omvormer toe (klein exemplaar per paneel). Per micro-omvormer kun je kiezen hoe hij getoond wordt: een afbeelding, een compacte tekstregel, een lijst met meerdere sensoren (uitgebreide gegevens), of een klein badge op het paneel — zie de weergave-keuzelijst op die rij.",
+    extra_entity_title: "Een extra sensor om mee te nemen bij het samenvoegen met het paneel",
+    add_inv_help: "Voeg een omvormer met een live sensor toe. Per omvormer kun je kiezen hoe hij getoond wordt: een afbeelding, een compacte tekstregel, een klein badge op het paneel, of samengevoegd met de waarde van dat paneel — zie de weergave-keuzelijst op die rij.",
+    add_micro_help: "Voeg een micro-omvormer toe (klein exemplaar per paneel). Per micro-omvormer kun je kiezen hoe hij getoond wordt: een afbeelding, een compacte tekstregel, een klein badge op het paneel, of samengevoegd met de waarde van dat paneel — zie de weergave-keuzelijst op die rij.",
   },
   de: {
     title_default: "Solarmodule",
@@ -266,22 +264,21 @@ const TRANSLATIONS = {
     attach_panel_title: "Zu welchem Modul dieser Wechselrichter gehört. Zuweisen setzt ihn direkt unter dieses Modul; wähle unten \"Badge auf Modul\", um ihn stattdessen auf dem Modul zu platzieren",
     disp_image: "Bild",
     disp_text: "Text",
-    disp_extended: "Erweiterte Daten",
     disp_badge: "Badge auf Modul",
     disp_merge: "Mit Modul zusammenführen",
-    disp_title: "Wie dieser Wechselrichter angezeigt wird: als Bildkachel, als kompakte Textzeile, als Liste mehrerer Sensoren, als kleines Badge auf dem Modul, oder zusammengeführt mit dem Watt-Wert dieses Moduls (Badge/Zusammenführen brauchen zuerst ein oben gewähltes Modul)",
+    disp_title: "Wie dieser Wechselrichter angezeigt wird: als Bildkachel, als kompakte Textzeile, als kleines Badge auf dem Modul, oder zusammengeführt (mit etwaigen zusätzlichen Sensoren) mit dem Watt-Wert dieses Moduls (Badge/Zusammenführen brauchen zuerst ein oben gewähltes Modul)",
     brand_title: "Marke: bestimmt Bild und Akzentfarbe",
-    inv_label_title: "Optionale Bezeichnung, angezeigt auf der Kachel/dem Badge und als Überschrift über erweiterten Daten",
+    inv_label_title: "Optionale Bezeichnung, angezeigt auf der Kachel/dem Badge und als Präfix dieser Sensorzeile bei Zusammenführung mit einem Modul",
     inv_main_entity_ph: "Hauptsensor (optional)...",
-    inv_main_entity_title: "Der Hauptsensor dieses Wechselrichters — sein Wert wird im Modus \"Bild\"/\"Text\" angezeigt, und als erste Zeile bei \"Erweiterte Daten\"",
+    inv_main_entity_title: "Der Hauptsensor dieses Wechselrichters — sein Wert wird im Modus \"Bild\"/\"Text\" angezeigt, und als erste Zeile bei Zusammenführung mit einem Modul",
     add_extra: "+ Sensor",
     remove_extra: "Sensor entfernen",
     move_up: "Nach oben verschieben",
     move_down: "Nach unten verschieben",
     extra_legend: "Zusätzliche Sensoren, zusammen mit dem Hauptsensor oben angezeigt:",
-    extra_entity_title: "Ein zusätzlicher Sensor für die Liste der erweiterten Daten",
-    add_inv_help: "Wechselrichter mit einem Live-Sensor hinzufügen. Pro Wechselrichter kannst du wählen, wie er angezeigt wird: als Bild, als kompakte Textzeile, als Liste mehrerer Sensoren (erweiterte Daten), oder als kleines Badge auf dem Modul — siehe die Anzeige-Auswahl in dieser Zeile.",
-    add_micro_help: "Mikro-Wechselrichter hinzufügen (kleine Einheit pro Modul). Pro Mikro-Wechselrichter kannst du wählen, wie er angezeigt wird: als Bild, als kompakte Textzeile, als Liste mehrerer Sensoren (erweiterte Daten), oder als kleines Badge auf dem Modul — siehe die Anzeige-Auswahl in dieser Zeile.",
+    extra_entity_title: "Ein zusätzlicher Sensor für die Zusammenführung mit dem Modul",
+    add_inv_help: "Wechselrichter mit einem Live-Sensor hinzufügen. Pro Wechselrichter kannst du wählen, wie er angezeigt wird: als Bild, als kompakte Textzeile, als kleines Badge auf dem Modul, oder zusammengeführt mit dem Wert dieses Moduls — siehe die Anzeige-Auswahl in dieser Zeile.",
+    add_micro_help: "Mikro-Wechselrichter hinzufügen (kleine Einheit pro Modul). Pro Mikro-Wechselrichter kannst du wählen, wie er angezeigt wird: als Bild, als kompakte Textzeile, als kleines Badge auf dem Modul, oder zusammengeführt mit dem Wert dieses Moduls — siehe die Anzeige-Auswahl in dieser Zeile.",
   },
 };
 function langOf(hass) {
@@ -475,10 +472,10 @@ function isNestedInverter(v, panels) {
 function isNestedDisplay(display) {
   return display === "badge" || display === "merge";
 }
-// "extended" and "merge" both combine `entity` with the `extra` sensor list;
-// they only differ in where that list is rendered.
+// "merge" combines `entity` with the `extra` sensor list, folded into the
+// panel's own reading.
 function usesExtraSensors(display) {
-  return display === "extended" || display === "merge";
+  return display === "merge";
 }
 function invDims(v) {
   return v && v.micro
@@ -579,6 +576,11 @@ function normalizeConfig(config) {
     if (display === "image" && v.badge) display = "badge";
     if ((display === "badge" || display === "merge") && !panelId) display = "image";
     if (display === "image" && legacyHideImage) display = "text";
+    // "extended" was dropped from the editor in favour of "merge" (which
+    // shows the same main+extra sensors, folded into the panel's own
+    // reading). Migrate old configs instead of leaving them stuck on a
+    // mode that's no longer selectable.
+    if (display === "extended") display = panelId ? "merge" : "text";
     return {
       id: v.id || uid(),
       x: Number(v.x) || 0,
@@ -1115,7 +1117,7 @@ class SolarLayoutCard extends HTMLElement {
             const b = invMeta(v);
             const { val: bval, unit: bunit } = fmtAt(v.entity);
             const bHasState = hasStateAt(v.entity);
-            // a badge is icon-only, so any extended-data sensors surface via the tooltip
+            // a badge is icon-only, so any extra sensors surface via the tooltip
             const extraLines = (v.extra || [])
               .filter((ex) => ex.entity && hasStateAt(ex.entity))
               .map((ex) => {
@@ -1180,8 +1182,7 @@ class SolarLayoutCard extends HTMLElement {
         const sleepHtml = sleep
           ? `<div class="inv-sleep" title="${t(hass, "sleep_title")}">${t(hass, "sleep_badge")}</div>`
           : "";
-        // "text" and "extended" display modes replace the image tile with a
-        // compact value line, or a list combining `entity` with `extra`.
+        // "text" display mode replaces the image tile with a compact value line.
         const sensorLine = (entity, lbl) => {
           if (hideSensor || !entity || !hasStateAt(entity)) return null;
           const { val: lv, unit: lu } = fmtAt(entity);
@@ -1193,16 +1194,6 @@ class SolarLayoutCard extends HTMLElement {
           bodyHtml = line
             ? `<div class="inv-text">${line.label ? `<span class="inv-text-label">${escHtml(line.label)}:</span> ` : ""}<span class="inv-text-val">${escHtml(line.val)} ${escHtml(line.unit)}</span></div>`
             : `<div class="inv-text inv-muted">—</div>`;
-        } else if (v.display === "extended") {
-          const lines = [sensorLine(v.entity, v.label)]
-            .concat((v.extra || []).map((ex) => sensorLine(ex.entity, ex.label)))
-            .filter(Boolean);
-          const titleHtml = (!hideLabel && v.label) ? `<div class="inv-list-title">${escHtml(v.label)}</div>` : "";
-          bodyHtml = titleHtml + (lines.length
-            ? `<div class="inv-list">${lines
-                .map((l) => `<div class="inv-list-row">${l.label ? `<span class="inv-list-label">${escHtml(l.label)}</span>` : ""}<span class="inv-list-val">${escHtml(l.val)} ${escHtml(l.unit)}</span></div>`)
-                .join("")}</div>`
-            : `<div class="inv-list inv-muted">—</div>`);
         } else {
           bodyHtml = `${image}${labelHtml}${reading}`;
         }
@@ -1764,29 +1755,21 @@ class SolarLayoutCard extends HTMLElement {
         color: var(--primary-text-color);
         text-shadow: 0 0 3px var(--card-background-color, #000), 0 0 3px var(--card-background-color, #000);
       }
-      /* "text" / "extended" display modes: no image, just value(s) as text.
+      /* "text" display mode: no image, just the value as text.
          align-self/justify-content: start so the box hugs its content
          instead of stretching (and centering it) across its whole grid
          cell, which otherwise reads as a lot of empty space around a
-         couple of short lines. */
-      .inverter.disp-text, .inverter.disp-extended {
+         short line. */
+      .inverter.disp-text {
         align-items: flex-start; justify-content: flex-start; text-align: left;
         align-self: start; padding: 4px 6px;
       }
-      .inv-text, .inv-list-row {
+      .inv-text {
         font-size: ${(0.72 * (fontScale || 1)).toFixed(3)}rem;
         color: var(--primary-text-color); white-space: nowrap;
       }
-      .inv-text-label, .inv-list-label {
-        color: var(--secondary-text-color); margin-right: 4px;
-      }
-      .inv-text-val, .inv-list-val { font-weight: 700; }
-      .inv-list { display: flex; flex-direction: column; gap: 1px; width: 100%; }
-      .inv-list-row { display: flex; justify-content: space-between; gap: 8px; }
-      .inv-list-title {
-        font-weight: 700; color: var(--inv, #fff);
-        font-size: ${(0.7 * (fontScale || 1)).toFixed(3)}rem; margin-bottom: 2px;
-      }
+      .inv-text-label { color: var(--secondary-text-color); margin-right: 4px; }
+      .inv-text-val { font-weight: 700; }
       .inv-muted { color: var(--secondary-text-color); font-size: .8rem; }
       .warn {
         position: absolute; top: 2px; right: 3px; z-index: 4;
@@ -2725,9 +2708,8 @@ class SolarLayoutCardEditor extends HTMLElement {
     row.className = "irow";
     row.dataset.id = v.id;
 
-    // Extra sensors shown alongside the main entity, for "extended" (as a
-    // list on the tile) and "merge" (folded into the panel's own reading).
-    // Built once, rebuilt on edits.
+    // Extra sensors shown alongside the main entity when this inverter is
+    // merged into its panel's reading. Built once, rebuilt on edits.
     const extraBox = document.createElement("div");
     extraBox.className = "iextra";
     extraBox.hidden = !usesExtraSensors(v.display);
@@ -2855,15 +2837,14 @@ class SolarLayoutCardEditor extends HTMLElement {
     panelSel.addEventListener("mousedown", fillPanelOptions);
 
     // Per-inverter display mode: full image tile, a compact text line, a
-    // list combining the main entity with "extended data" sensors, or a
-    // small badge nested on its panel (needs a panel picked above).
+    // small badge nested on its panel, or merged (with any extra sensors)
+    // into that panel's own reading (badge/merge need a panel picked above).
     const dispSel = document.createElement("select");
     dispSel.className = "dispsel";
     dispSel.title = t(this._hass, "disp_title");
     dispSel.innerHTML = [
       ["image", "disp_image"],
       ["text", "disp_text"],
-      ["extended", "disp_extended"],
       ["badge", "disp_badge"],
       ["merge", "disp_merge"],
     ].map(([val, key]) => `<option value="${val}">${escHtml(t(this._hass, key))}</option>`).join("");
