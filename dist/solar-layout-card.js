@@ -1,5 +1,5 @@
-/*! solar-layout-card v1.10.0 | MIT License */
-const VERSION = "1.10.0";
+/*! solar-layout-card v1.10.1 | MIT License */
+const VERSION = "1.10.1";
 
 /* ---------- i18n ----------
  * Follows Home Assistant's UI language (hass.language). Supported: nl, de, en.
@@ -474,6 +474,11 @@ function isNestedInverter(v, panels) {
 // of whether that panel currently exists.
 function isNestedDisplay(display) {
   return display === "badge" || display === "merge";
+}
+// "extended" and "merge" both combine `entity` with the `extra` sensor list;
+// they only differ in where that list is rendered.
+function usesExtraSensors(display) {
+  return display === "extended" || display === "merge";
 }
 function invDims(v) {
   return v && v.micro
@@ -1132,16 +1137,14 @@ class SolarLayoutCard extends HTMLElement {
           const { val: mv, unit: mu } = fmtAt(entity);
           return `${lbl ? `<span class="reading-label">${escHtml(lbl)}:</span> ` : ""}<span class="value">${escHtml(mv)}</span><span class="unit">${escHtml(mu)}</span>`;
         };
-        const mergedHtml = (layout.inverters || [])
+        const mergeLines = (layout.inverters || [])
           .filter((v) => isMergeInverter(v, layout.panels) && v.panelId === p.id)
           .flatMap((v) => [mergeLine(v.entity, v.label)].concat((v.extra || []).map((ex) => mergeLine(ex.entity, ex.label))))
-          .filter(Boolean)
-          .map((line) => `<span class="reading-sep">·</span>${line}`)
-          .join("");
-        const panelValueHtml = showPanelReading
-          ? `<span class="value">${escHtml(val)}</span><span class="unit">${escHtml(unit)}</span>`
-          : "";
-        const readingInner = panelValueHtml + mergedHtml;
+          .filter(Boolean);
+        const readingLines = showPanelReading
+          ? [`<span class="value">${escHtml(val)}</span><span class="unit">${escHtml(unit)}</span>`].concat(mergeLines)
+          : mergeLines;
+        const readingInner = readingLines.join("<br>");
         return `
           <div class="panel ${p.orientation}"
                style="grid-column:${p.x + 1}/span ${w};
@@ -1708,8 +1711,8 @@ class SolarLayoutCard extends HTMLElement {
       }
       .reading .value { font-weight: 700; font-size: ${(0.95 * textScale).toFixed(3)}rem; }
       .reading .unit { font-size: ${(0.7 * textScale).toFixed(3)}rem; margin-left: 2px; opacity: .9; }
-      /* extra values folded in from a "merge" inverter, alongside the panel's own reading */
-      .reading .reading-sep { opacity: .5; margin: 0 4px; }
+      /* extra values folded in from a "merge" inverter, each on its own
+         line alongside the panel's own reading */
       .reading .reading-label { font-size: ${(0.7 * textScale).toFixed(3)}rem; opacity: .85; margin-right: 2px; }
       .plabel {
         position: absolute; top: 3px; left: 5px; z-index: 1;
@@ -2722,11 +2725,12 @@ class SolarLayoutCardEditor extends HTMLElement {
     row.className = "irow";
     row.dataset.id = v.id;
 
-    // Extended data: a compact list of extra sensors shown alongside the
-    // main entity when display = "extended". Built once, rebuilt on edits.
+    // Extra sensors shown alongside the main entity, for "extended" (as a
+    // list on the tile) and "merge" (folded into the panel's own reading).
+    // Built once, rebuilt on edits.
     const extraBox = document.createElement("div");
     extraBox.className = "iextra";
-    extraBox.hidden = v.display !== "extended";
+    extraBox.hidden = !usesExtraSensors(v.display);
     const rebuildExtra = () => {
       extraBox.innerHTML = "";
       const legend = document.createElement("div");
@@ -2868,7 +2872,7 @@ class SolarLayoutCardEditor extends HTMLElement {
     nestedOpts.forEach((o) => { o.disabled = !v.panelId; });
     dispSel.addEventListener("change", (e) => {
       v.display = e.target.value;
-      extraBox.hidden = v.display !== "extended";
+      extraBox.hidden = !usesExtraSensors(v.display);
       if (isNestedDisplay(v.display)) {
         // badge/merge nest into the panel, so any wires pointing at this
         // inverter's old free-standing tile would otherwise dangle.

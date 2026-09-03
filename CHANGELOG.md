@@ -4,6 +4,11 @@ Alle noemenswaardige wijzigingen aan deze card worden hier bijgehouden.
 Formaat volgt [Keep a Changelog](https://keepachangelog.com/) en
 [Semantic Versioning](https://semver.org/).
 
+## [1.10.1] - 2026-09-03
+### Opgelost
+- Bij "Samenvoegen met paneel" was de "+ sensor"-lijst (extra sensoren) niet zichtbaar in de editor, waardoor je net als bij "Uitgebreide gegevens" meerdere entities had moeten kunnen toevoegen, maar dat niet kon — alleen de hoofdsensor was instelbaar.
+- De samengevoegde waarden in de paneel-pill stonden achter elkaar op één regel; ze staan nu elk op hun eigen regel binnen dezelfde bubbel (zoals bij "Uitgebreide gegevens").
+
 ## [1.10.0] - 2026-09-03
 ### Toegevoegd
 - Vijfde weergave-optie voor (micro-)omvormers: **Samenvoegen met paneel** (`merge`). In plaats van een apart badge-icoontje of los tekstvak worden de hoofdsensor en eventuele extra sensoren van de omvormer direct in dezelfde Watt-waarde-pill van het gekoppelde paneel getoond (bijv. "401 W · 1,74 A · 51°C"). Werkt, net als "Badge op paneel", alleen zodra er een paneel gekoppeld is; bestaande bedrading naar die omvormer wordt dan verwijderd.
