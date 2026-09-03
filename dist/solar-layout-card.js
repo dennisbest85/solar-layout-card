@@ -1,5 +1,5 @@
-/*! solar-layout-card v1.8.0 | MIT License */
-const VERSION = "1.8.0";
+/*! solar-layout-card v1.10.0 | MIT License */
+const VERSION = "1.10.0";
 
 /* ---------- i18n ----------
  * Follows Home Assistant's UI language (hass.language). Supported: nl, de, en.
@@ -88,13 +88,16 @@ const TRANSLATIONS = {
     disp_text: "Text",
     disp_extended: "Extended data",
     disp_badge: "Badge on panel",
-    disp_title: "How this inverter is shown: a picture tile, a compact text line, a list of several sensors, or a small badge nested on its panel (pick a panel above first)",
+    disp_merge: "Merge with panel",
+    disp_title: "How this inverter is shown: a picture tile, a compact text line, a list of several sensors, a small badge nested on its panel, or merged into that panel's own Watt reading (badge/merge need a panel picked above)",
     brand_title: "Brand: sets the picture and accent colour",
     inv_label_title: "Optional label, shown on the tile/badge and as the heading above extended data",
     inv_main_entity_ph: "main sensor (optional)...",
     inv_main_entity_title: "The main sensor for this inverter — its value is what \"Image\"/\"Text\" mode shows, and the first line in \"Extended data\"",
     add_extra: "+ sensor",
     remove_extra: "remove sensor",
+    move_up: "Move up",
+    move_down: "Move down",
     extra_legend: "Extra sensors shown together with the main sensor above:",
     extra_entity_title: "An additional sensor to include in the extended-data list",
     add_inv_help: "Add an inverter with a live sensor. Per inverter you can pick how it's shown: an image, a compact text line, a list of several sensors (extended data), or a small badge nested on its panel — see the display dropdown on its row.",
@@ -175,13 +178,16 @@ const TRANSLATIONS = {
     disp_text: "Tekst",
     disp_extended: "Uitgebreide gegevens",
     disp_badge: "Badge op paneel",
-    disp_title: "Hoe deze omvormer wordt getoond: een afbeeldingstegel, een compacte tekstregel, een lijst met meerdere sensoren, of een klein badge genesteld op het paneel (kies eerst een paneel hierboven)",
+    disp_merge: "Samenvoegen met paneel",
+    disp_title: "Hoe deze omvormer wordt getoond: een afbeeldingstegel, een compacte tekstregel, een lijst met meerdere sensoren, een klein badge genesteld op het paneel, of samengevoegd met de Watt-waarde van dat paneel (badge/samenvoegen vereisen eerst een gekoppeld paneel hierboven)",
     brand_title: "Merk: bepaalt de afbeelding en accentkleur",
     inv_label_title: "Optioneel label, getoond op de tegel/badge en als kopje boven uitgebreide gegevens",
     inv_main_entity_ph: "hoofdsensor (optioneel)...",
     inv_main_entity_title: "De hoofdsensor van deze omvormer — de waarde die \"Afbeelding\"/\"Tekst\" toont, en de eerste regel bij \"Uitgebreide gegevens\"",
     add_extra: "+ sensor",
     remove_extra: "sensor verwijderen",
+    move_up: "Omhoog verplaatsen",
+    move_down: "Omlaag verplaatsen",
     extra_legend: "Extra sensoren, getoond naast de hoofdsensor hierboven:",
     extra_entity_title: "Een extra sensor om toe te voegen aan het lijstje bij uitgebreide gegevens",
     add_inv_help: "Voeg een omvormer met een live sensor toe. Per omvormer kun je kiezen hoe hij getoond wordt: een afbeelding, een compacte tekstregel, een lijst met meerdere sensoren (uitgebreide gegevens), of een klein badge op het paneel — zie de weergave-keuzelijst op die rij.",
@@ -262,13 +268,16 @@ const TRANSLATIONS = {
     disp_text: "Text",
     disp_extended: "Erweiterte Daten",
     disp_badge: "Badge auf Modul",
-    disp_title: "Wie dieser Wechselrichter angezeigt wird: als Bildkachel, als kompakte Textzeile, als Liste mehrerer Sensoren, oder als kleines Badge auf dem Modul (zuerst oben ein Modul wählen)",
+    disp_merge: "Mit Modul zusammenführen",
+    disp_title: "Wie dieser Wechselrichter angezeigt wird: als Bildkachel, als kompakte Textzeile, als Liste mehrerer Sensoren, als kleines Badge auf dem Modul, oder zusammengeführt mit dem Watt-Wert dieses Moduls (Badge/Zusammenführen brauchen zuerst ein oben gewähltes Modul)",
     brand_title: "Marke: bestimmt Bild und Akzentfarbe",
     inv_label_title: "Optionale Bezeichnung, angezeigt auf der Kachel/dem Badge und als Überschrift über erweiterten Daten",
     inv_main_entity_ph: "Hauptsensor (optional)...",
     inv_main_entity_title: "Der Hauptsensor dieses Wechselrichters — sein Wert wird im Modus \"Bild\"/\"Text\" angezeigt, und als erste Zeile bei \"Erweiterte Daten\"",
     add_extra: "+ Sensor",
     remove_extra: "Sensor entfernen",
+    move_up: "Nach oben verschieben",
+    move_down: "Nach unten verschieben",
     extra_legend: "Zusätzliche Sensoren, zusammen mit dem Hauptsensor oben angezeigt:",
     extra_entity_title: "Ein zusätzlicher Sensor für die Liste der erweiterten Daten",
     add_inv_help: "Wechselrichter mit einem Live-Sensor hinzufügen. Pro Wechselrichter kannst du wählen, wie er angezeigt wird: als Bild, als kompakte Textzeile, als Liste mehrerer Sensoren (erweiterte Daten), oder als kleines Badge auf dem Modul — siehe die Anzeige-Auswahl in dieser Zeile.",
@@ -452,6 +461,20 @@ function invImg(v) {
 function isBadgeInverter(v, panels) {
   return !!(v && v.display === "badge" && v.panelId && panels.some((p) => p.id === v.panelId));
 }
+// "merge" folds the inverter's reading(s) into its panel's own Watt pill,
+// same panel-existence requirement as badge.
+function isMergeInverter(v, panels) {
+  return !!(v && v.display === "merge" && v.panelId && panels.some((p) => p.id === v.panelId));
+}
+// Either kind of panel-nested inverter: not a free-standing canvas/grid tile.
+function isNestedInverter(v, panels) {
+  return isBadgeInverter(v, panels) || isMergeInverter(v, panels);
+}
+// True for a display value that requires a panel (badge/merge), regardless
+// of whether that panel currently exists.
+function isNestedDisplay(display) {
+  return display === "badge" || display === "merge";
+}
 function invDims(v) {
   return v && v.micro
     ? { w: MICRO_W, h: MICRO_H }
@@ -543,12 +566,13 @@ function normalizeConfig(config) {
     const brandOk = micro ? MICRO_INVERTERS[v.brand] : INVERTERS[v.brand];
     const panelId = v.panelId || null;
     // How this inverter's tile renders: the image+value tile (default), a
-    // compact text line, a list combining `entity` with `extra`, or nested
-    // as a small badge on its panel. "badge" (or the old `badge: true` flag)
-    // only takes effect while it actually has a panel to sit on.
-    let display = ["text", "extended", "badge"].includes(v.display) ? v.display : "image";
+    // compact text line, a list combining `entity` with `extra`, nested as a
+    // small badge on its panel, or merged into that panel's own Watt pill.
+    // "badge" (or the old `badge: true` flag), and "merge", only take effect
+    // while the inverter actually has a panel to sit on.
+    let display = ["text", "extended", "badge", "merge"].includes(v.display) ? v.display : "image";
     if (display === "image" && v.badge) display = "badge";
-    if (display === "badge" && !panelId) display = "image";
+    if ((display === "badge" || display === "merge") && !panelId) display = "image";
     if (display === "image" && legacyHideImage) display = "text";
     return {
       id: v.id || uid(),
@@ -734,8 +758,8 @@ class SolarLayoutCard extends HTMLElement {
 
   _bounds() {
     const l = this._layout();
-    // badge-mode inverters are nested on their panel, not their own grid cell
-    const items = l.panels.concat((l.inverters || []).filter((v) => !isBadgeInverter(v, l.panels)));
+    // panel-nested inverters (badge/merge) don't occupy their own grid cell
+    const items = l.panels.concat((l.inverters || []).filter((v) => !isNestedInverter(v, l.panels)));
     if (!items.length) return { cols: 8, rows: 6 };
     let cols = 0, rows = 0;
     for (const it of items) {
@@ -1101,6 +1125,23 @@ class SolarLayoutCard extends HTMLElement {
             </div>`;
           })
           .join("");
+        // Inverters set to display: "merge" fold their reading(s) into this
+        // panel's own Watt pill instead of a separate badge/tile.
+        const mergeLine = (entity, lbl) => {
+          if (hideSensor || !entity || !hasStateAt(entity)) return null;
+          const { val: mv, unit: mu } = fmtAt(entity);
+          return `${lbl ? `<span class="reading-label">${escHtml(lbl)}:</span> ` : ""}<span class="value">${escHtml(mv)}</span><span class="unit">${escHtml(mu)}</span>`;
+        };
+        const mergedHtml = (layout.inverters || [])
+          .filter((v) => isMergeInverter(v, layout.panels) && v.panelId === p.id)
+          .flatMap((v) => [mergeLine(v.entity, v.label)].concat((v.extra || []).map((ex) => mergeLine(ex.entity, ex.label))))
+          .filter(Boolean)
+          .map((line) => `<span class="reading-sep">·</span>${line}`)
+          .join("");
+        const panelValueHtml = showPanelReading
+          ? `<span class="value">${escHtml(val)}</span><span class="unit">${escHtml(unit)}</span>`
+          : "";
+        const readingInner = panelValueHtml + mergedHtml;
         return `
           <div class="panel ${p.orientation}"
                style="grid-column:${p.x + 1}/span ${w};
@@ -1109,10 +1150,7 @@ class SolarLayoutCard extends HTMLElement {
                data-id="${p.id}"
                data-entity="${p.entity}">
             <div class="cells"></div>
-            ${showPanelReading ? `<div class="reading">
-              <span class="value">${escHtml(val)}</span>
-              <span class="unit">${escHtml(unit)}</span>
-            </div>` : ""}
+            ${readingInner ? `<div class="reading">${readingInner}</div>` : ""}
             ${p.label ? `<div class="plabel">${escHtml(p.label)}</div>` : ""}
             ${warn ? `<div class="warn" title="${t(hass, "warn_zero_day")}">!</div>` : ""}
             ${badgesHtml}
@@ -1121,8 +1159,8 @@ class SolarLayoutCard extends HTMLElement {
       .join("");
 
     const invertersHtml = (layout.inverters || [])
-      // badge-mode inverters are rendered nested inside their panel above
-      .filter((v) => !isBadgeInverter(v, layout.panels))
+      // badge/merge inverters are rendered nested inside their panel above
+      .filter((v) => !isNestedInverter(v, layout.panels))
       .map((v) => {
         const brand = invMeta(v);
         const dims = invDims(v);
@@ -1670,6 +1708,9 @@ class SolarLayoutCard extends HTMLElement {
       }
       .reading .value { font-weight: 700; font-size: ${(0.95 * textScale).toFixed(3)}rem; }
       .reading .unit { font-size: ${(0.7 * textScale).toFixed(3)}rem; margin-left: 2px; opacity: .9; }
+      /* extra values folded in from a "merge" inverter, alongside the panel's own reading */
+      .reading .reading-sep { opacity: .5; margin: 0 4px; }
+      .reading .reading-label { font-size: ${(0.7 * textScale).toFixed(3)}rem; opacity: .85; margin-right: 2px; }
       .plabel {
         position: absolute; top: 3px; left: 5px; z-index: 1;
         font-size: ${(0.65 * textScale).toFixed(3)}rem;
@@ -1720,10 +1761,14 @@ class SolarLayoutCard extends HTMLElement {
         color: var(--primary-text-color);
         text-shadow: 0 0 3px var(--card-background-color, #000), 0 0 3px var(--card-background-color, #000);
       }
-      /* "text" / "extended" display modes: no image, just value(s) as text */
+      /* "text" / "extended" display modes: no image, just value(s) as text.
+         align-self/justify-content: start so the box hugs its content
+         instead of stretching (and centering it) across its whole grid
+         cell, which otherwise reads as a lot of empty space around a
+         couple of short lines. */
       .inverter.disp-text, .inverter.disp-extended {
-        align-items: flex-start; justify-content: center; text-align: left;
-        padding: 4px 6px;
+        align-items: flex-start; justify-content: flex-start; text-align: left;
+        align-self: start; padding: 4px 6px;
       }
       .inv-text, .inv-list-row {
         font-size: ${(0.72 * (fontScale || 1)).toFixed(3)}rem;
@@ -1887,7 +1932,7 @@ class SolarLayoutCardEditor extends HTMLElement {
         maxY = Math.max(maxY, p.y + h);
       });
       (l.inverters || []).forEach((v) => {
-        if (isBadgeInverter(v, l.panels)) return; // nested on its panel, not its own canvas spot
+        if (isNestedInverter(v, l.panels)) return; // nested on its panel, not its own canvas spot
         const d = invDims(v);
         maxX = Math.max(maxX, v.x + d.w);
         maxY = Math.max(maxY, v.y + d.h);
@@ -2293,11 +2338,14 @@ class SolarLayoutCardEditor extends HTMLElement {
     const brand = invMeta(v);
     const dims = invDims(v);
     const el = document.createElement("div");
-    const isBadge = isBadgeInverter(v, this._panels());
-    el.className = "einv" + (v.micro ? " micro" : "") + (isBadge ? " badge" : "");
+    // Editor canvas is a simplified position-only view: both "badge" and
+    // "merge" just show as a small nested dot on the panel here, since only
+    // the real card renders the icon-badge vs. merged-pill difference.
+    const isNested = isNestedInverter(v, this._panels());
+    el.className = "einv" + (v.micro ? " micro" : "") + (isNested ? " badge" : "");
     el.dataset.id = v.id;
     el.dataset.kind = "inverter";
-    if (isBadge) {
+    if (isNested) {
       el.title = `${brand.name}${v.label ? " " + v.label : ""}`;
     } else {
       el.style.left = v.x * GRID + "px";
@@ -2307,7 +2355,7 @@ class SolarLayoutCardEditor extends HTMLElement {
     }
     el.style.setProperty("--inv", brand.color);
     el.innerHTML = `<img class="einv-img" src="${invImg(v)}" alt="${brand.name}" />`;
-    if (!isBadge) {
+    if (!isNested) {
       this._attachDrag(el);
       this._attachConnectClick(el);
     }
@@ -2315,11 +2363,11 @@ class SolarLayoutCardEditor extends HTMLElement {
   }
 
   // Create an inverter's DOM node and place it: nested inside its panel
-  // (bottom-right badge) when display is "badge", otherwise as a
-  // free-standing, draggable tile on the canvas.
+  // when display is "badge"/"merge", otherwise as a free-standing,
+  // draggable tile on the canvas.
   _appendInverterNode(v) {
     const el = this._makeInverterNode(v);
-    const panel = isBadgeInverter(v, this._panels())
+    const panel = isNestedInverter(v, this._panels())
       ? this.shadowRoot.querySelector(`.epanel[data-id="${cssEsc(v.panelId)}"]`)
       : null;
     if (panel) {
@@ -2647,7 +2695,7 @@ class SolarLayoutCardEditor extends HTMLElement {
     const orphaned = this._inverters().filter((v) => v.panelId === id);
     orphaned.forEach((v) => {
       v.panelId = null;
-      if (v.display === "badge") v.display = "image";
+      if (isNestedDisplay(v.display)) v.display = "image";
       this._refreshInverterNode(v);
     });
     if (orphaned.length) this._renderInverterList();
@@ -2685,7 +2733,7 @@ class SolarLayoutCardEditor extends HTMLElement {
       legend.className = "iextra-legend";
       legend.textContent = t(this._hass, "extra_legend");
       extraBox.appendChild(legend);
-      (v.extra || []).forEach((ex) => {
+      (v.extra || []).forEach((ex, idx) => {
         const exRow = document.createElement("div");
         exRow.className = "iextra-row";
         exRow.dataset.id = ex.id;
@@ -2725,6 +2773,31 @@ class SolarLayoutCardEditor extends HTMLElement {
           this._emit();
         });
 
+        const moveExtra = (dir) => {
+          const arr = v.extra || [];
+          const j = idx + dir;
+          if (j < 0 || j >= arr.length) return;
+          [arr[idx], arr[j]] = [arr[j], arr[idx]];
+          rebuildExtra();
+          this._refreshInverterNode(v);
+          this._emit();
+        };
+        const exUp = document.createElement("button");
+        exUp.type = "button";
+        exUp.className = "reorder";
+        exUp.title = t(this._hass, "move_up");
+        exUp.textContent = "↑";
+        exUp.disabled = idx === 0;
+        exUp.addEventListener("click", () => moveExtra(-1));
+
+        const exDown = document.createElement("button");
+        exDown.type = "button";
+        exDown.className = "reorder";
+        exDown.title = t(this._hass, "move_down");
+        exDown.textContent = "↓";
+        exDown.disabled = idx === (v.extra || []).length - 1;
+        exDown.addEventListener("click", () => moveExtra(1));
+
         const exDel = document.createElement("button");
         exDel.className = "del";
         exDel.title = t(this._hass, "remove_extra");
@@ -2736,7 +2809,7 @@ class SolarLayoutCardEditor extends HTMLElement {
           this._emit();
         });
 
-        exRow.append(exEnt, exDatalist, exLbl, exDel);
+        exRow.append(exUp, exDown, exEnt, exDatalist, exLbl, exDel);
         extraBox.appendChild(exRow);
       });
 
@@ -2788,15 +2861,16 @@ class SolarLayoutCardEditor extends HTMLElement {
       ["text", "disp_text"],
       ["extended", "disp_extended"],
       ["badge", "disp_badge"],
+      ["merge", "disp_merge"],
     ].map(([val, key]) => `<option value="${val}">${escHtml(t(this._hass, key))}</option>`).join("");
     dispSel.value = v.display || "image";
-    const badgeOpt = dispSel.querySelector('option[value="badge"]');
-    if (badgeOpt) badgeOpt.disabled = !v.panelId;
+    const nestedOpts = [...dispSel.querySelectorAll('option[value="badge"], option[value="merge"]')];
+    nestedOpts.forEach((o) => { o.disabled = !v.panelId; });
     dispSel.addEventListener("change", (e) => {
       v.display = e.target.value;
       extraBox.hidden = v.display !== "extended";
-      if (v.display === "badge") {
-        // a badge is nested inside its panel, so any wires pointing at this
+      if (isNestedDisplay(v.display)) {
+        // badge/merge nest into the panel, so any wires pointing at this
         // inverter's old free-standing tile would otherwise dangle.
         const l = this._layout();
         const before = (l.connections || []).length;
@@ -2815,14 +2889,14 @@ class SolarLayoutCardEditor extends HTMLElement {
         this._placeOnPanel(v, e.target.value);
       } else {
         v.panelId = null;
-        if (v.display === "badge") {
+        if (isNestedDisplay(v.display)) {
           v.display = "image";
           dispSel.value = "image";
         }
         this._refreshInverterNode(v);
         this._emit();
       }
-      if (badgeOpt) badgeOpt.disabled = !v.panelId;
+      nestedOpts.forEach((o) => { o.disabled = !v.panelId; });
     });
 
     const brand = document.createElement("select");
@@ -2928,9 +3002,9 @@ class SolarLayoutCardEditor extends HTMLElement {
     v.x = x;
     v.y = y;
     v.panelId = panelId;
-    if (v.display === "badge") {
-      // badge nodes live nested inside their panel's DOM node, so moving
-      // panel means re-parenting rather than just sliding left/top.
+    if (isNestedDisplay(v.display)) {
+      // badge/merge nodes live nested inside their panel's DOM node, so
+      // moving panel means re-parenting rather than just sliding left/top.
       this._refreshInverterNode(v);
     } else {
       const node = this._canvasNode(v.id);
@@ -3129,8 +3203,14 @@ class SolarLayoutCardEditor extends HTMLElement {
         margin:2px 0 4px 52px; padding:6px 0 0; border-top:1px dashed var(--divider-color,#444);
       }
       .iextra[hidden] { display:none; }
-      .iextra-row { display:grid; grid-template-columns: 1fr 84px auto; gap:6px; align-items:center; }
+      .iextra-row { display:grid; grid-template-columns: 20px 20px 1fr 84px auto; gap:6px; align-items:center; }
       .iextra-row datalist { display:none; }
+      .iextra-row .reorder {
+        cursor:pointer; width:20px; height:20px; line-height:1; padding:0;
+        font-size:.75rem; border-radius:4px; border:1px solid var(--divider-color,#666);
+        background:none; color:var(--secondary-text-color);
+      }
+      .iextra-row .reorder:disabled { opacity:.3; cursor:default; }
       .iextra .addextra {
         align-self:flex-start; cursor:pointer; font-size:.75rem;
         background:none; border:1px dashed var(--divider-color,#666); border-radius:4px;

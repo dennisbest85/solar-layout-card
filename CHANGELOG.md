@@ -4,6 +4,16 @@ Alle noemenswaardige wijzigingen aan deze card worden hier bijgehouden.
 Formaat volgt [Keep a Changelog](https://keepachangelog.com/) en
 [Semantic Versioning](https://semver.org/).
 
+## [1.10.0] - 2026-09-03
+### Toegevoegd
+- Vijfde weergave-optie voor (micro-)omvormers: **Samenvoegen met paneel** (`merge`). In plaats van een apart badge-icoontje of los tekstvak worden de hoofdsensor en eventuele extra sensoren van de omvormer direct in dezelfde Watt-waarde-pill van het gekoppelde paneel getoond (bijv. "401 W · 1,74 A · 51°C"). Werkt, net als "Badge op paneel", alleen zodra er een paneel gekoppeld is; bestaande bedrading naar die omvormer wordt dan verwijderd.
+
+## [1.9.0] - 2026-09-03
+### Opgelost
+- Bij "Tekst" en "Uitgebreide gegevens" werd de tegel verticaal gecentreerd binnen de volledige (op de afbeelding-weergave afgestemde) tegelgrootte, waardoor er veel lege ruimte rond een paar korte regeltjes tekst ontstond. De tegel volgt nu de hoogte van zijn inhoud in plaats van te centreren in een te grote box.
+### Toegevoegd
+- Extra sensoren bij "Uitgebreide gegevens" kunnen nu met ↑/↓-knopjes in de editor van volgorde wisselen, in plaats van vast te staan in de volgorde waarin ze zijn toegevoegd.
+
 ## [1.8.0] - 2026-09-02
 ### Toegevoegd
 - Nieuwe instelling "Toon Watt-waarde op panelen" (`show_panel_reading`, standaard aan). Uitzetten laat alleen de kleur van het paneel oplichten, zonder de Watt-tekst erover — voor wie liever een rustiger, puur visueel overzicht heeft.

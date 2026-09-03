@@ -1,7 +1,7 @@
 # Solar Layout Card
 
 ![hacs](https://img.shields.io/badge/HACS-Dashboard-41BDF5.svg)
-![version](https://img.shields.io/badge/version-1.8.0-f4c40f.svg)
+![version](https://img.shields.io/badge/version-1.10.0-f4c40f.svg)
 
 **English** · [Nederlands](#nederlands)
 
@@ -116,10 +116,12 @@ usual picture tile), `text` (a compact `label: value` line, no picture), `extend
 small list combining `entity` with an `extra` array of `{ id, entity, label }` sensors —
 for showing several readings, e.g. frequency, current, voltage, from one physical inverter
 without a separate tile per sensor; picking it reveals an inline "+ sensor" list in the
-editor), or `badge` (nests the inverter as a small badge in the corner of its panel — name
-and every reading shown on hover — instead of a separate tile; only takes effect once a
-panel is attached above, and any wires to/from that inverter are dropped since it becomes
-part of the panel rather than a separate node).
+editor), `badge` (nests the inverter as a small badge in the corner of its panel — name
+and every reading shown on hover — instead of a separate tile), or `merge` (folds
+`entity` and `extra` into the panel's own Watt reading pill, e.g. "401 W · 1.74 A · 51°C",
+instead of a separate element at all). `badge` and `merge` only take effect once a panel
+is attached above, and any wires to/from that inverter are dropped since it becomes part
+of the panel rather than a separate node.
 
 If an inverter has a sensor that reads 0 while the sun is down, a small sleep icon (Zzz)
 appears on the inverter. This mirrors the red 0 W warning that panels get during the day.
@@ -280,11 +282,13 @@ de gebruikelijke afbeeldingstegel), `text` (een compacte "label: waarde"-regel, 
 afbeelding), `extended` (een klein lijstje dat `entity` combineert met een `extra`-array van
 `{ id, entity, label }`-sensoren — om meerdere metingen, bijv. frequentie, stroom, spanning,
 van één fysieke omvormer te tonen zonder per sensor een aparte tegel; kies je deze optie,
-dan verschijnt in de editor inline een "+ sensor"-lijstje), of `badge` (nestelt de omvormer
+dan verschijnt in de editor inline een "+ sensor"-lijstje), `badge` (nestelt de omvormer
 als klein badge-icoontje in de hoek van zijn paneel — naam en alle waarden als tooltip bij
-hover — in plaats van een los vak; werkt alleen zodra er hierboven een paneel gekoppeld is,
-en eventuele bedradingslijnen naar die omvormer worden dan verwijderd omdat hij nu bij het
-paneel hoort in plaats van een los element te zijn).
+hover — in plaats van een los vak), of `merge` (voegt `entity` en `extra` samen in de
+Watt-waarde-pill van het paneel zelf, bijv. "401 W · 1,74 A · 51°C", in plaats van een
+apart element). `badge` en `merge` werken alleen zodra er hierboven een paneel gekoppeld
+is, en eventuele bedradingslijnen naar die omvormer worden dan verwijderd omdat hij nu bij
+het paneel hoort in plaats van een los element te zijn.
 
 Als een omvormer een sensor heeft die 0 meet terwijl de zon onder is, verschijnt er een
 klein slaap-icoon (Zzz) op de omvormer. Dit is het spiegelbeeld van de rode 0 W-waarschuwing
