@@ -1,5 +1,5 @@
-/*! solar-layout-card v1.11.1 | MIT License */
-const VERSION = "1.11.1";
+/*! solar-layout-card v1.12.0 | MIT License */
+const VERSION = "1.12.0";
 
 /* ---------- i18n ----------
  * Follows Home Assistant's UI language (hass.language). Supported: nl, de, en.
@@ -76,6 +76,7 @@ const TRANSLATIONS = {
     straight: "straight",
     curved: "curved",
     toggle_shape: "Toggle straight/curved",
+    remove_connection_hint: "Click to remove this connection",
     // meta
     card_desc: "Solar panel layout with live PV output and a drag & drop editor.",
     remove_layout_confirm: "Remove layout \"{name}\"?",
@@ -166,6 +167,7 @@ const TRANSLATIONS = {
     straight: "recht",
     curved: "gebogen",
     toggle_shape: "Wissel recht/gebogen",
+    remove_connection_hint: "Klik om deze verbinding te verwijderen",
     card_desc: "Legplan van zonnepanelen met live PV-opbrengst en drag & drop editor.",
     remove_layout_confirm: "Legplan \"{name}\" verwijderen?",
     kind_micro_title: "Micro-omvormer",
@@ -255,6 +257,7 @@ const TRANSLATIONS = {
     straight: "gerade",
     curved: "gebogen",
     toggle_shape: "Gerade/gebogen umschalten",
+    remove_connection_hint: "Klicken, um diese Verbindung zu entfernen",
     card_desc: "Solarmodul-Layout mit Live-PV-Ertrag und Drag-&-Drop-Editor.",
     remove_layout_confirm: "Layout \"{name}\" entfernen?",
     kind_micro_title: "Mikro-Wechselrichter",
@@ -2316,6 +2319,23 @@ class SolarLayoutCardEditor extends HTMLElement {
       node.setAttribute("stroke-width", "2.5");
       node.setAttribute("stroke-linecap", "round");
       svg.appendChild(node);
+
+      // Invisible, much wider sibling along the same geometry: a bigger,
+      // easier click target than the 2.5px visible line, and a hover
+      // highlight so the line reads as clickable. Click removes it.
+      const hit = node.cloneNode();
+      hit.removeAttribute("stroke");
+      hit.removeAttribute("stroke-width");
+      hit.setAttribute("class", "cline-hit");
+      hit.dataset.id = c.id;
+      const hitTitle = document.createElementNS("http://www.w3.org/2000/svg", "title");
+      hitTitle.textContent = t(this._hass, "remove_connection_hint");
+      hit.appendChild(hitTitle);
+      hit.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        this._removeConnection(c.id);
+      });
+      svg.appendChild(hit);
     });
     return svg;
   }
@@ -3125,6 +3145,11 @@ class SolarLayoutCardEditor extends HTMLElement {
       .canvas.connecting { cursor:crosshair; }
       .canvas.connecting .epanel, .canvas.connecting .einv { cursor:crosshair; }
       .econn { position:absolute; left:0; top:0; pointer-events:none; z-index:1; overflow:visible; }
+      .cline-hit {
+        fill:none; stroke:transparent; stroke-width:14px; cursor:pointer;
+        pointer-events:stroke;
+      }
+      .cline-hit:hover { stroke:rgba(255,255,255,0.35); }
       .epanel {
         position:absolute; box-sizing:border-box;
         background:hsl(48,70%,60%); border:1px solid rgba(0,0,0,.35);

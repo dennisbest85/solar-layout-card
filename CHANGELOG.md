@@ -4,6 +4,10 @@ Alle noemenswaardige wijzigingen aan deze card worden hier bijgehouden.
 Formaat volgt [Keep a Changelog](https://keepachangelog.com/) en
 [Semantic Versioning](https://semver.org/).
 
+## [1.12.0] - 2026-09-06
+### Toegevoegd
+- Een verbindingslijn kan nu direct op het canvas aangeklikt worden om 'm te verwijderen (met een hover-highlight zodat duidelijk is dat de lijn klikbaar is), in plaats van dat je alleen via de losse "Connections"-lijst onderaan kon verwijderen. Die lijst blijft ook gewoon bestaan voor kleur/vorm.
+
 ## [1.11.1] - 2026-09-06
 ### Opgelost
 - Sensoren die "Unknown"/"Unavailable" rapporteren (bijv. omdat een paneel 's nachts niets meet) toonden die tekst letterlijk als waarde. Nu wordt daarvoor gewoon "0" getoond, net als bij een sensor die zelf 0 rapporteert. Geldt voor panelen, omvormer-tegels, "Samenvoegen met paneel" en badge-tooltips.

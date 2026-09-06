@@ -1,7 +1,7 @@
 # Solar Layout Card
 
 ![hacs](https://img.shields.io/badge/HACS-Dashboard-41BDF5.svg)
-![version](https://img.shields.io/badge/version-1.11.1-f4c40f.svg)
+![version](https://img.shields.io/badge/version-1.12.0-f4c40f.svg)
 
 **English** · [Nederlands](#nederlands)
 
@@ -126,7 +126,9 @@ If an inverter has a sensor that reads 0 while the sun is down, a small sleep ic
 appears on the inverter. This mirrors the red 0 W warning that panels get during the day.
 
 Per connection: `from`, `to` (panel or inverter `id`), `curved` (straight or curved) and
-`color` (line colour, default `#ffd54a`).
+`color` (line colour, default `#ffd54a`). In the editor, click directly on a connection
+line to remove it, or manage colour/shape/removal from the "Connections" list below the
+canvas.
 
 ## Time slider and footer bar
 
@@ -294,7 +296,9 @@ klein slaap-icoon (Zzz) op de omvormer. Dit is het spiegelbeeld van de rode 0 W-
 die panelen overdag krijgen.
 
 Per verbinding: `from`, `to` (paneel- of omvormer-`id`), `curved` (recht of gebogen) en
-`color` (lijnkleur, standaard `#ffd54a`).
+`color` (lijnkleur, standaard `#ffd54a`). Klik in de editor direct op een verbindingslijn
+om 'm te verwijderen, of beheer kleur/vorm/verwijderen via de "Connections"-lijst onder
+het canvas.
 
 ### Tijdbalk en onderbalk
 
