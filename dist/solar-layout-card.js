@@ -1,5 +1,5 @@
-/*! solar-layout-card v1.11.0 | MIT License */
-const VERSION = "1.11.0";
+/*! solar-layout-card v1.11.1 | MIT License */
+const VERSION = "1.11.1";
 
 /* ---------- i18n ----------
  * Follows Home Assistant's UI language (hass.language). Supported: nl, de, en.
@@ -1086,9 +1086,9 @@ class SolarLayoutCard extends HTMLElement {
       if (st._nohist) return { val: t(hass, "time_no_history"), unit: "" };
       const unit = st.attributes.unit_of_measurement || "";
       const num = Number(st.state);
-      const val = Number.isFinite(num)
-        ? num.toLocaleString(undefined, { maximumFractionDigits: 2 })
-        : st.state;
+      // A sensor that's there but reports something non-numeric (unknown,
+      // unavailable, ...) reads as 0 rather than showing that raw state text.
+      const val = (Number.isFinite(num) ? num : 0).toLocaleString(undefined, { maximumFractionDigits: 2 });
       return { val, unit };
     };
     const numAt = (entity) => {
@@ -1511,9 +1511,9 @@ class SolarLayoutCard extends HTMLElement {
       if (st._nohist) return { val: t(hass, "time_no_history"), unit: "" };
       const unit = st.attributes.unit_of_measurement || "";
       const num = Number(st.state);
-      const val = Number.isFinite(num)
-        ? num.toLocaleString(undefined, { maximumFractionDigits: 2 })
-        : st.state;
+      // A sensor that's there but reports something non-numeric (unknown,
+      // unavailable, ...) reads as 0 rather than showing that raw state text.
+      const val = (Number.isFinite(num) ? num : 0).toLocaleString(undefined, { maximumFractionDigits: 2 });
       return { val, unit };
     };
     const sr = this.shadowRoot;
