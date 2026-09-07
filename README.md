@@ -1,7 +1,7 @@
 # Solar Layout Card
 
 ![hacs](https://img.shields.io/badge/HACS-Dashboard-41BDF5.svg)
-![version](https://img.shields.io/badge/version-1.12.0-f4c40f.svg)
+![version](https://img.shields.io/badge/version-1.12.1-f4c40f.svg)
 
 **English** · [Nederlands](#nederlands)
 

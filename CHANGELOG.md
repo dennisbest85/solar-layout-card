@@ -4,6 +4,10 @@ Alle noemenswaardige wijzigingen aan deze card worden hier bijgehouden.
 Formaat volgt [Keep a Changelog](https://keepachangelog.com/) en
 [Semantic Versioning](https://semver.org/).
 
+## [1.12.1] - 2026-09-06
+### Opgelost
+- De tijdbalk haalde geen geschiedenis op voor "extra sensoren" die je bij "Samenvoegen met paneel" hebt toegevoegd — alleen de hoofdsensoren van panelen en omvormers werden meegenomen. Terugscrollen in de tijd toonde daardoor voor die extra sensoren "geen geschiedenis" in plaats van de waarde op dat moment. Ze worden nu ook meegenomen in de geschiedenis-opvraging.
+
 ## [1.12.0] - 2026-09-06
 ### Toegevoegd
 - Een verbindingslijn kan nu direct op het canvas aangeklikt worden om 'm te verwijderen (met een hover-highlight zodat duidelijk is dat de lijn klikbaar is), in plaats van dat je alleen via de losse "Connections"-lijst onderaan kon verwijderen. Die lijst blijft ook gewoon bestaan voor kleur/vorm.

@@ -1,5 +1,5 @@
-/*! solar-layout-card v1.12.0 | MIT License */
-const VERSION = "1.12.0";
+/*! solar-layout-card v1.12.1 | MIT License */
+const VERSION = "1.12.1";
 
 /* ---------- i18n ----------
  * Follows Home Assistant's UI language (hass.language). Supported: nl, de, en.
@@ -793,7 +793,10 @@ class SolarLayoutCard extends HTMLElement {
     const l = this._layout();
     const ids = [];
     for (const p of l.panels) if (p.entity) ids.push(p.entity);
-    for (const v of (l.inverters || [])) if (v.entity) ids.push(v.entity);
+    for (const v of (l.inverters || [])) {
+      if (v.entity) ids.push(v.entity);
+      for (const ex of (v.extra || [])) if (ex.entity) ids.push(ex.entity);
+    }
     return Array.from(new Set(ids));
   }
 
@@ -804,7 +807,10 @@ class SolarLayoutCard extends HTMLElement {
     const ids = [];
     for (const l of (this._config.layouts || [])) {
       for (const p of (l.panels || [])) if (p.entity) ids.push(p.entity);
-      for (const v of (l.inverters || [])) if (v.entity) ids.push(v.entity);
+      for (const v of (l.inverters || [])) {
+        if (v.entity) ids.push(v.entity);
+        for (const ex of (v.extra || [])) if (ex.entity) ids.push(ex.entity);
+      }
     }
     return Array.from(new Set(ids));
   }
